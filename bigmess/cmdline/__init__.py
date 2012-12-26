@@ -14,3 +14,5 @@ import cmd_cachefiles
 import cmd_querycfg
 import cmd_updatedb
 import cmd_genpkgs
+import cmd_genaptlists
+import cmd_genmirrorselect
