@@ -1,4 +1,6 @@
- <select id="release" name="release">
+.. raw:: html
+
+  <select id="release" name="release">
    <option selected value="">Select your operating system</option>
    <option value="win32">MS Windows (32bit)</option>
    <option value="win64">MS Windows (64bit)</option>

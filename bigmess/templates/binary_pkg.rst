@@ -6,10 +6,10 @@
 .. container:: package_info_links
 
   Related packages
-    * `Source package <source_pkg_{{ src_name }}>`
 {%- for bin in binary|sort if not bin == pname %}
-    * :ref:`{{ bin }}`
+    * :ref:`binary_pkg_{{ bin }}`
 {%- endfor %}
+
   External resources
 {% if homepage %}    * `Project homepage <{{ homepage }}>`_
 {% endif -%}
@@ -44,9 +44,9 @@
   {%- for version in release[1]|dictsort %}
   {%- if loop.first %}
      * - {{ release[0] }}
-  {%- else -%}
+  {%- else %}
      * -
-  {% endif %}
+  {%- endif %}
        - {{ version[0] }}
        - {{ ', '.join(version[1]) }}
   {%- endfor %}

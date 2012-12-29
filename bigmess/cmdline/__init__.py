@@ -16,3 +16,4 @@ import cmd_updatedb
 import cmd_genpkgs
 import cmd_genaptlists
 import cmd_genmirrorselect
+import cmd_genpkglists

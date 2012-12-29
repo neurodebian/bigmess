@@ -53,3 +53,9 @@ def save_db(db, filename):
     utf_contents = utf_writer(gzf)
     utf_contents.write(pp.pformat(db))
     gzf.close()
+
+def underline_text(text, symbol):
+    """Underline a string with a given symbol"""
+    underline = symbol * len(text)
+    return '%s\n%s\n' % (text, underline)
+

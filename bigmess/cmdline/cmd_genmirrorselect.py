@@ -39,7 +39,7 @@ def run(args):
                             for m in cfg.options('mirrors')])
 
     jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
-    srclist_template = jinja_env.get_template('sources_lists.html')
+    srclist_template = jinja_env.get_template('sources_lists.rst')
     print srclist_template.render(code2relname=code2relname,
                                   mirror2name=mirror2name,
                                   mirror2url=mirror2url)
