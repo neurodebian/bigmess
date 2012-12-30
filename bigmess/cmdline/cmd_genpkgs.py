@@ -167,7 +167,7 @@ def _gen_pkg_page(pname, db):
     else:
         long_descr = 'No description available.'
 
-    availability = dict([(cfg.get('release codenames', k), v)
+    availability = dict([(cfg.get('release names', k), v)
                                 for k, v in binpkginfo['in_suite'].iteritems()])
     page = pkg_template.render(
             cfg=cfg,

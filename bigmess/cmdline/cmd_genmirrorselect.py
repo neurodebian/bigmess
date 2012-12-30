@@ -30,8 +30,8 @@ def setup_parser(parser):
     pass
 
 def run(args):
-    code2relname = dict([(r, cfg.get('release codenames', r))
-                            for r in cfg.options('release codenames')
+    code2relname = dict([(r, cfg.get('release names', r))
+                            for r in cfg.options('release names')
                                 if not r == 'data'])
     mirror2name = dict([(m, cfg.get('mirror names', m))
                             for m in cfg.options('mirrors')])

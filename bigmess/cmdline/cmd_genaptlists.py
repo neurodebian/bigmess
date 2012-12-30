@@ -29,7 +29,7 @@ def setup_parser(parser):
         help="""target directory for storing the generated lists""")
 
 def run(args):
-    for release in cfg.options('release codenames'):
+    for release in cfg.options('release names'):
         if release == 'data':
             # no seperate list for the data archive
             continue

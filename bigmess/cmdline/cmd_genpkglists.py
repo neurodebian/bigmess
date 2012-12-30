@@ -79,7 +79,7 @@ def run(args):
     suite_tocs = toctoc['suite']
     for suite_name, suite_content in by_suite.iteritems():
         label = 'toc_pkgs_for_suite_%s' % suite_name
-        title = 'Packages for %s' % cfg.get('release codenames', suite_name)
+        title = 'Packages for %s' % cfg.get('release names', suite_name)
         suite_tocs[label] = title
         page = bintoc_template.render(
                 label=label,

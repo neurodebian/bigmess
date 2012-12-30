@@ -63,11 +63,12 @@ def _url2filename(cache, url):
 
 def run(args):
     lgr.debug("using file cache at '%s'" % args.filecache)
-    rurls = cfg.get('release files', 'urls', default='').split()
+    releases = cfg.options('release files')
     # ensure the cache is there
     if not os.path.exists(args.filecache):
         os.makedirs(args.filecache)
-    for rurl in rurls:
+    for release in releases:
+        rurl = cfg.get('release files', release)
         # first get 'Release' files
         dst_path = _url2filename(args.filecache, rurl)
         if not _download_file(rurl, dst_path, args.force_update):
