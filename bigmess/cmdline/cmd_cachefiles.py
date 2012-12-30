@@ -63,6 +63,11 @@ def _url2filename(cache, url):
 
 def run(args):
     lgr.debug("using file cache at '%s'" % args.filecache)
+    # get all metadata files from the repo
+    meta_baseurl = cfg.get('metadata', 'source extracts baseurl',
+                           default=None)
+    meta_filenames = cfg.get('metadata', 'source extracts filenames',
+                             default='').split()
     releases = cfg.options('release files')
     # ensure the cache is there
     if not os.path.exists(args.filecache):
@@ -101,11 +106,6 @@ def run(args):
                 #->
                 #http://raw.github.com/yarikoptic/vowpal_wabbit/debian/debian/compat
                 src_name = spkg['Package']
-                # get all metadata files from the repo
-                meta_baseurl = cfg.get('metadata', 'source extracts baseurl',
-                                       default=None)
-                meta_filenames = cfg.get('metadata', 'source extracts filenames',
-                                         default='').split()
                 if not len(meta_filenames) or meta_baseurl is None:
                     continue
                 lgr.debug("query metadata for source package '%s'" % src_name)
