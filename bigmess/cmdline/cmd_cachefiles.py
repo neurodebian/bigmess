@@ -91,11 +91,26 @@ def run(args):
             # from the referenced repo
             sfile = gzip.open(dst_path)
             for spkg in deb822.Sources.iter_paragraphs(gzip.open(dst_path)):
-                vcsurl = spkg.get('Vcs-Browser', None)
-                if vcsurl is None:
-                    lgr.warning("no VCS URL for '%s'" % spkg['Package'])
-                    continue
+                # TODO pull stuff directly form VCS
+                #vcsurl = spkg.get('Vcs-Browser', None)
+                #if vcsurl is None:
+                #    lgr.warning("no VCS URL for '%s'" % spkg['Package'])
+                #    continue
                 #print vcsurl
                 #http://github.com/yarikoptic/vowpal_wabbit
                 #->
                 #http://raw.github.com/yarikoptic/vowpal_wabbit/debian/debian/compat
+                src_name = spkg['Package']
+                # get all metadata files from the repo
+                meta_baseurl = cfg.get('metadata', 'source extracts baseurl',
+                                       default=None)
+                meta_filenames = cfg.get('metadata', 'source extracts filenames',
+                                         default='').split()
+                if not len(meta_filenames) or meta_baseurl is None:
+                    continue
+                lgr.debug("query metadata for source package '%s'" % src_name)
+                for mfn in meta_filenames:
+                    mfurl = '/'.join((meta_baseurl, src_name, mfn))
+                    dst_path = _url2filename(args.filecache, mfurl)
+                    _download_file(mfurl, dst_path, args.force_update)
+
