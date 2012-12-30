@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 import cmd_cachefiles
 import cmd_querycfg
 import cmd_updatedb
-import cmd_genpkgs
-import cmd_genaptlists
-import cmd_genmirrorselect
-import cmd_genpkglists
+import cmd_mkpkgs
+import cmd_mkaptcfgs
+import cmd_mkrepocfg
+import cmd_mkpkgtocs
