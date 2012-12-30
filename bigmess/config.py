@@ -84,25 +84,25 @@ class ConfigManager(SafeConfigParser):
         """
         SafeConfigParser.__init__(self)
 
-        # store additional config file names
-        if not filenames is None:
-            self.__cfg_filenames = filenames
-        else:
-            self.__cfg_filenames = []
-
         # set critical defaults
         for sec, vars in ConfigManager._DEFAULTS.iteritems():
             self.add_section(sec)
             for key, value in vars.iteritems():
                 self.set(sec, key, value)
 
+        self.__cfg_filenames = []
+
         # now get the setting
-        self.reload()
+        self.reload(filenames)
 
 
-    def reload(self):
+    def reload(self, filenames=None):
         """Re-read settings from all configured locations.
         """
+        # store additional config file names
+        if not filenames is None:
+            self.__cfg_filenames = filenames
+
         # listof filenames to parse (custom plus some standard ones), they are
         # listed in the order they need to be parsed to guarantee a sane
         # configuration file cascade
