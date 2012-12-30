@@ -1,6 +1,6 @@
 .. raw:: html
 
-  <select id="release" name="release">
+ <select id="release" name="release">
    <option selected value="">Select your operating system</option>
    <option value="win32">MS Windows (32bit)</option>
    <option value="win64">MS Windows (64bit)</option>
@@ -9,6 +9,7 @@
    <option value="{{ code }}">{{ relname }}</option>
 {%- endfor %}
  </select>
+{% if mirror2url|count -%}
  <select id="mirror" name="mirror">
    <option selected value="">Select a download server</option>
 {%- for id, mirrorname in mirror2name|dictsort %}
@@ -27,3 +28,4 @@
 
  //-->
  </script>
+{% endif -%}
