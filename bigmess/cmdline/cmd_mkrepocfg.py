@@ -6,8 +6,28 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Generate an HTML snippet for a mirror selection form.
+"""Generate repository configuration helpers from a template.
 
+This command can be used to, for example, generate HTML forms to allow for
+selection from various possible repository configurations (e.g. multiple
+suites, and multiple mirrors).
+
+A Jinja template is used to generate output in arbitrary formats. The template
+renderer is provided with three dictionary containing all relevant information:
+
+``code2name``
+  Mapping of repository suite code names to human readable names (e.g. full
+  release names)
+
+``mirror2name``
+  Mapping of mirror code names to human readable names. If no mirrors are
+  configured, this is an empty dictionary
+
+``mirror2url``
+  Mapping of mirror code names to their respective repository URLs. If no
+  mirrors are configured, this is an empty dictionary
+
+The rendered template is written to stdout.
 """
 
 __docformat__ = 'restructuredtext'
@@ -19,28 +39,37 @@ import argparse
 import os
 from os.path import join as opj
 from bigmess import cfg
-from jinja2 import Environment as JinjaEnvironment
-from jinja2 import PackageLoader as JinjaPackageLoader
+from jinja2 import Environment, PackageLoader, FileSystemLoader
 import logging
 lgr = logging.getLogger(__name__)
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
 def setup_parser(parser):
-    pass
+    parser.add_argument('-t', '--template',
+                        help="""Path to a custom template file""")
 
 def run(args):
+    mirror2name = {}
+    mirror2url = {}
     code2relname = dict([(r, cfg.get('release names', r))
                             for r in cfg.options('release names')
                                 if not r == 'data'])
-    mirror2name = dict([(m, cfg.get('mirror names', m))
+    if cfg.has_section('mirror names'):
+        mirror2name = dict([(m, cfg.get('mirror names', m))
                             for m in cfg.options('mirrors')])
-    mirror2url = dict([(m, cfg.get('mirrors', m))
-                            for m in cfg.options('mirrors')])
-
-    jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
-    srclist_template = jinja_env.get_template('sources_lists.rst')
-    print srclist_template.render(code2relname=code2relname,
+    if cfg.has_section('mirrors'):
+        mirror2url = dict([(m, cfg.get('mirrors', m))
+                                for m in cfg.options('mirrors')])
+    if not args.template is None:
+        templ_dir = os.path.dirname(args.template)
+        templ_basename = os.path.basename(args.template)
+        jinja_env = Environment(loader=FileSystemLoader(templ_dir))
+        srclist_template = jinja_env.get_template(templ_basename)
+    else:
+        jinja_env = Environment(loader=PackageLoader('bigmess'))
+        srclist_template = jinja_env.get_template('sources_lists.rst')
+    print srclist_template.render(code2name=code2relname,
                                   mirror2name=mirror2name,
                                   mirror2url=mirror2url)
 

@@ -5,7 +5,7 @@
    <option value="win32">MS Windows (32bit)</option>
    <option value="win64">MS Windows (64bit)</option>
    <option value="mac">Mac OS X</option>
-{%- for code, relname in code2relname|dictsort(true, 'value') %}
+{%- for code, relname in code2name|dictsort(true, 'value') %}
    <option value="{{ code }}">{{ relname }}</option>
 {%- endfor %}
  </select>
