@@ -20,6 +20,7 @@ lgr = logging.getLogger('bigmess')
 # do chatterbox by default (but only for the bigmess.* loggers)
 lgr.setLevel(logging.DEBUG)
 
+import os
 import sys
 import argparse
 import textwrap
@@ -165,6 +166,10 @@ formatter = logging.Formatter(bigmess.cfg.get('logging', 'console format'))
 console.setFormatter(formatter)
 lgr.addHandler(console)
 
+# post-mortem test of config file presence after the logger is functional
+if not args.common_config_file is None and not os.path.isfile(args.common_config_file[0]):
+    raise ValueError("configuration file '%s' does not exist"
+                     % args.common_config_file[0])
 # run the function associated with the selected command
 try:
     args.func(args)
