@@ -9,7 +9,7 @@
    <option value="{{ code }}">{{ relname }}</option>
 {%- endfor %}
  </select>
-{% if mirror2url|count -%}
+{% if mirror2url|count %}
  <select id="mirror" name="mirror">
    <option selected value="">Select a download server</option>
 {%- for id, mirrorname in mirror2name|dictsort %}
