@@ -26,8 +26,7 @@ from .helpers import parser_add_common_args
 from pprint import PrettyPrinter
 from ..utils import load_db
 import logging
-from jinja2 import Environment as JinjaEnvironment
-from jinja2 import PackageLoader as JinjaPackageLoader
+from jinja2 import Environment, PackageLoader, FileSystemLoader
 lgr = logging.getLogger(__name__)
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -36,6 +35,11 @@ def setup_parser(parser):
     parser_add_common_args(parser, opt=('pkgdb',))
     parser.add_argument('-d', '--dest-dir', default=os.curdir,
         help="""target directory for storing the generated pages""")
+    parser.add_argument('-t', '--template',
+                        help="""Path to a custom template file""")
+    parser.add_argument('--pkgs', '--packages',
+                        nargs='+',
+                        help="""render pages for these binary packages""")
 
 def _underline_text(text, symbol):
     underline = symbol * len(text)
@@ -142,7 +146,7 @@ def _proc_long_descr(lines):
     bls = block_lines(ld)
     return blocks_to_rst(bls)
 
-def _gen_pkg_page(pname, db):
+def _gen_pkg_page(pname, db, pkg_template):
     bindb = db['bin']
     srcdb = db['src']
     binpkginfo = bindb[pname]
@@ -150,11 +154,6 @@ def _gen_pkg_page(pname, db):
     pkginfo = {}
     pkginfo.update(binpkginfo)
     pkginfo.update(srcpkginfo)
-    #pp = PrettyPrinter(indent=2)
-    #print >> sys.stderr, pp.pformat(binpkginfo)
-    #print >> sys.stderr, pp.pformat(srcpkginfo)
-    jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
-    pkg_template = jinja_env.get_template('binary_pkg.rst')
 
     if 'short_description' in pkginfo:
         title = _underline_text('**%s** -- %s' % (pname,
@@ -180,10 +179,25 @@ def _gen_pkg_page(pname, db):
 
 def run(args):
     lgr.debug("using package DB at '%s'" % args.pkgdb)
+    if not args.template is None:
+        templ_dir = os.path.dirname(args.template)
+        templ_basename = os.path.basename(args.template)
+        jinja_env = Environment(loader=FileSystemLoader(templ_dir))
+        template = jinja_env.get_template(templ_basename)
+    else:
+        jinja_env = Environment(loader=PackageLoader('bigmess'))
+        template = jinja_env.get_template('binary_pkg.rst')
     # read entire DB
     db = load_db(args.pkgdb)
-    for pkg in db['bin']:
-        page = _gen_pkg_page(pkg, db)
+    if args.pkgs is None:
+        lgr.debug("render pages for all known binary packages")
+        pkgs = db['bin']
+    else:
+        lgr.debug("render pages given list of binary packages only")
+        pkgs = args.pkgs
+
+    for pkg in pkgs:
+        page = _gen_pkg_page(pkg, db, template)
         of = codecs.open(opj(args.dest_dir, '%s.rst' % pkg), 'wb', 'utf-8')
         of.write(page)
         of.close()
