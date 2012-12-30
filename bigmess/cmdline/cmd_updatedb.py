@@ -18,6 +18,7 @@ __docformat__ = 'restructuredtext'
 import argparse
 import os
 import codecs
+import yaml
 import gzip
 from debian import deb822
 import apt_pkg
@@ -46,6 +47,11 @@ def _url2filename(cache, url):
 
 def run(args):
     lgr.debug("using file cache at '%s'" % args.filecache)
+    # get all metadata files from the repo
+    meta_baseurl = cfg.get('metadata', 'source extracts baseurl',
+                           default=None)
+    meta_filenames = cfg.get('metadata', 'source extracts filenames',
+                             default='').split()
     rurls = cfg.get('release files', 'urls', default='').split()
     if args.init_db is None:
         db = {'src':{}, 'bin': {}}
@@ -53,7 +59,9 @@ def run(args):
         db = load_db(args.init_db)
     srcdb = db['src']
     bindb = db['bin']
-    for rurl in rurls:
+    releases = cfg.options('release files')
+    for release in releases:
+        rurl = cfg.get('release files', release)
         # first 'Release' files
         relf_path = _url2filename(args.filecache, rurl)
         baseurl = '/'.join(rurl.split('/')[:-1])
@@ -87,6 +95,18 @@ def run(args):
                                 src_version,  bindb[b].get('latest_version', '')) > 0:
                             bindb[b]['src_name'] = src_name
                             bindb[b]['latest_version'] = src_version
+                if len(meta_filenames) and not meta_baseurl is None:
+                    for mfn in meta_filenames:
+                        mfurl = '/'.join((meta_baseurl, src_name, mfn))
+                        mfpath = _url2filename(args.filecache, mfurl)
+                        if os.path.exists(mfpath):
+                            lgr.debug("import metadata for source package '%s'"
+                                      % src_name)
+                            try:
+                                sdb['upstream'] = yaml.safe_load(open(mfpath))
+                            except yaml.scanner.ScannerError:
+                                lgr.warning("Malformed upstream YAML data for '%s'"
+                                            % src_name)
                 srcdb[src_name] = sdb
             for arch in archs:
                 # next 'Packages.gz' for each component and architecture
