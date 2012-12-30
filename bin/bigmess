@@ -86,8 +86,10 @@ parser.add_argument('--verbose-level',
                     dest='common_verbose_level',
                     help="""level of verbosity of console output. By default
                          only warnings and errors are printed.""")
-
-
+parser.add_argument('-c', '--cfg', '--config',
+                    dest='common_config_file', nargs=1,
+                    help="""configuration file with settings to overwrite all
+                         defaults and configurations from other locations.""")
 
 # subparsers
 subparsers = parser.add_subparsers()
@@ -148,6 +150,8 @@ available via command-specific help options, i.e.:
 
 # parse cmd args
 args = parser.parse_args()
+# load custom config
+bigmess.cfg.reload(args.common_config_file)
 # default log levels
 args.common_log_level = log_levels.get(args.common_log_level, logging.DEBUG)
 args.common_verbose_level = log_levels.get(args.common_verbose_level,
