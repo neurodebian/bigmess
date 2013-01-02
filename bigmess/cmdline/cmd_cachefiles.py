@@ -69,6 +69,8 @@ def run(args):
     meta_filenames = cfg.get('metadata', 'source extracts filenames',
                              default='').split()
     releases = cfg.options('release files')
+    # for preventing unnecessary queries
+    lookupcache ={}
     # ensure the cache is there
     if not os.path.exists(args.filecache):
         os.makedirs(args.filecache)
@@ -112,5 +114,8 @@ def run(args):
                 for mfn in meta_filenames:
                     mfurl = '/'.join((meta_baseurl, src_name, mfn))
                     dst_path = _url2filename(args.filecache, mfurl)
+                    if dst_path in lookupcache:
+                        continue
                     _download_file(mfurl, dst_path, args.force_update)
+                    lookupcache[dst_path] = None
 
