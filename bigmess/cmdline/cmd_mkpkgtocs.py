@@ -50,12 +50,17 @@ def run(args):
     by_suite = {}
     by_maintainer = {}
     maintainer_name = {}
-    # XXX when blend is ready
-    #by_topic = {}
+    by_field = {}
     for pname, pkg in db['bin'].iteritems():
         for suite in pkg['in_suite']:
             by_suite[suite] = by_suite.get(suite, list()) + [pname]
         src_name = pkg['src_name']
+        if 'upstream' in srcdb[src_name] and 'Tags' in srcdb[src_name]['upstream']:
+            # we have some tags
+            for tag in srcdb[src_name]['upstream']['Tags']:
+                if tag.startswith('field::'):
+                    field = tag[7:]
+                    by_field[field] = by_field.get(field, list()) + [pname]
         maintainer = srcdb[pkg['src_name']]['maintainer']
         uploaders = [u.strip() for u in srcdb[src_name]['uploaders'].split(',')]
         for maint in uploaders + [maintainer]:
@@ -75,7 +80,7 @@ def run(args):
     # write TOCs for all suites
     jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
     bintoc_template = jinja_env.get_template('binpkg_toc.rst')
-    toctoc = {'suite': {}, 'maintainer': {}}
+    toctoc = {'suite': {}, 'maintainer': {}, 'field': {}}
     suite_tocs = toctoc['suite']
     for suite_name, suite_content in by_suite.iteritems():
         label = 'toc_pkgs_for_suite_%s' % suite_name
@@ -85,6 +90,17 @@ def run(args):
                 label=label,
                 title=title,
                 pkgs=suite_content,
+                db=bindb) 
+        _write_page(page, args.dest_dir, label)
+    field_tocs = toctoc['field']
+    for field_name, field_content in by_field.iteritems():
+        label = 'toc_pkgs_for_field_%s' % field_name
+        title = 'Packages for %s' % field_name
+        field_tocs[label] = title
+        page = bintoc_template.render(
+                label=label,
+                title=title,
+                pkgs=field_content,
                 db=bindb) 
         _write_page(page, args.dest_dir, label)
     # full TOC
