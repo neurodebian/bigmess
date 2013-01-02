@@ -5,7 +5,7 @@ Repository content
 
 * :ref:`toc_all_pkgs`
 
-{% for kind, toc in toctoc|dictsort|reverse %}
+{% for kind, toc in toctoc|dictsort %}
 By {{ kind }}
 {{ '-' * (kind|count + 3) }}
 
