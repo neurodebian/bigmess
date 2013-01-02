@@ -95,18 +95,29 @@ def run(args):
                                 src_version,  bindb[b].get('latest_version', '')) > 0:
                             bindb[b]['src_name'] = src_name
                             bindb[b]['latest_version'] = src_version
-                if len(meta_filenames) and not meta_baseurl is None:
-                    for mfn in meta_filenames:
-                        mfurl = '/'.join((meta_baseurl, src_name, mfn))
-                        mfpath = _url2filename(args.filecache, mfurl)
-                        if os.path.exists(mfpath):
-                            lgr.debug("import metadata for source package '%s'"
-                                      % src_name)
-                            try:
-                                sdb['upstream'] = yaml.safe_load(open(mfpath))
-                            except yaml.scanner.ScannerError:
-                                lgr.warning("Malformed upstream YAML data for '%s'"
-                                            % src_name)
+                if 'upstream' in meta_filenames and not meta_baseurl is None:
+                    mfn = 'upstream'
+                    mfurl = '/'.join((meta_baseurl, src_name, mfn))
+                    mfpath = _url2filename(args.filecache, mfurl)
+                    if os.path.exists(mfpath):
+                        lgr.debug("import metadata for source package '%s'"
+                                  % src_name)
+                        try:
+                            upstream = yaml.safe_load(open(mfpath))
+                        except yaml.scanner.ScannerError:
+                            lgr.warning("Malformed upstream YAML data for '%s'"
+                                        % src_name)
+                        # uniformize structure
+                        if 'Reference' in upstream and not isinstance(upstream['Reference'], list):
+                            upstream['Reference'] = [upstream['Reference']]
+                        sdb['upstream'] = upstream
+                sdb['component'] = comp
+                for mf in meta_filenames:
+                    if os.path.exists(_url2filename(args.filecache,
+                                                    '/'.join((meta_baseurl,
+                                                              src_name,
+                                                              mf)))):
+                        sdb['havemeta_%s' % mf.replace('.', '_').replace('-', '_')] = True
                 srcdb[src_name] = sdb
             for arch in archs:
                 # next 'Packages.gz' for each component and architecture
