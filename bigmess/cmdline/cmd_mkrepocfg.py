@@ -40,6 +40,7 @@ import os
 from os.path import join as opj
 from bigmess import cfg
 from jinja2 import Environment, PackageLoader, FileSystemLoader
+import codecs
 import logging
 lgr = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ def run(args):
                             for r in cfg.options('release names')
                                 if not r == 'data'])
     if cfg.has_section('mirror names'):
-        mirror2name = dict([(m, cfg.get('mirror names', m))
+        mirror2name = dict([(m, codecs.decode(cfg.get('mirror names', m), 'utf-8'))
                             for m in cfg.options('mirrors')])
     if cfg.has_section('mirrors'):
         mirror2url = dict([(m, cfg.get('mirrors', m))
@@ -69,8 +70,10 @@ def run(args):
     else:
         jinja_env = Environment(loader=PackageLoader('bigmess'))
         srclist_template = jinja_env.get_template('sources_lists.rst')
-    print srclist_template.render(code2name=code2relname,
+    print codecs.encode(
+            srclist_template.render(code2name=code2relname,
                                   mirror2name=mirror2name,
-                                  mirror2url=mirror2url)
+                                  mirror2url=mirror2url),
+            'utf-8')
 
 
