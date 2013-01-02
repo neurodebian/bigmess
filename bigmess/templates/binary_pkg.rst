@@ -27,9 +27,12 @@
 {% endif -%}
 {% if vcs_browser %}    * `Browse source code <{{ vcs_browser }}>`_
 {% endif -%}
-{% if nitrc_id %}    * `NITRC listing <http://www.nitrc.org/project?group_id={{ nitrc_id }}>`_
+{% if upstream and 'Also-Known-As' in upstream %}
+  Info on other portals
+{% if upstream['Also-Known-As'].NeuroLex %}    * `NeuroLex <http://uri.neuinfo.org/nif/nifstd/{{ upstream['Also-Known-As'].NeuroLex }}>`_
 {% endif -%}
-{% if neurolex_id %}    * `NeuroLex entry <http://uri.neuinfo.org/nif/nifstd/{{ neurolex_id }}>`_
+{% if upstream['Also-Known-As'].NITRC %}    * `NITRC <http://www.nitrc.org/project?group_id={{ upstream['Also-Known-As'].NITRC }}>`_
+{% endif -%}
 {% endif %}
 
 {% if component == 'non-free' -%}
