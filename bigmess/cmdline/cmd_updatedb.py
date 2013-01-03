@@ -18,14 +18,13 @@ __docformat__ = 'restructuredtext'
 import argparse
 import os
 import codecs
-import yaml
 import gzip
+import yaml
 from debian import deb822
 import apt_pkg
 apt_pkg.init_system()
 from os.path import join as opj
 from bigmess import cfg
-from pprint import PrettyPrinter
 from ..utils import load_db, save_db
 from .helpers import parser_add_common_args
 import logging
@@ -33,17 +32,21 @@ lgr = logging.getLogger(__name__)
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
+
 def setup_parser(parser):
     parser_add_common_args(parser, opt=('filecache', 'pkgdb'))
     parser.add_argument('--init-db',
                         help="""inital DB""")
 
+
 def _proc_release_file(release_filename, baseurl):
     rp = deb822.Release(codecs.open(release_filename, 'r', 'utf-8'))
     return rp['Suite'], rp['Components'].split(), rp['Architectures'].split()
 
+
 def _url2filename(cache, url):
     return opj(cache, url.replace('/', '_').replace(':', '_'))
+
 
 def run(args):
     lgr.debug("using file cache at '%s'" % args.filecache)
@@ -54,7 +57,7 @@ def run(args):
                              default='').split()
     rurls = cfg.get('release files', 'urls', default='').split()
     if args.init_db is None:
-        db = {'src':{}, 'bin': {}}
+        db = {'src': {}, 'bin': {}}
     else:
         db = load_db(args.init_db)
     srcdb = db['src']
@@ -131,7 +134,7 @@ def run(args):
                     except KeyError:
                         # if a package has no source name, let's hope it is the
                         # same as the binary name
-                        bin_srcname = bin_name
+                        bin_srcname = bin_name  # unused bin_srcname ???
                     if not bin_name in bindb:
                         lgr.warning("No corresponding source package for "
                                     "binary package '%s' in [%s, %s, %s]"
@@ -140,7 +143,7 @@ def run(args):
                     try:
                         bindb[bin_name]['in_suite'][suite][bin_version].append(arch)
                     except KeyError:
-                        if not suite in  bindb[bin_name]['in_suite']:
+                        if not suite in bindb[bin_name]['in_suite']:
                             # package not listed in this suite?
                             bindb[bin_name]['in_suite'][suite] = {bin_version: [arch]}
                         elif not bin_version in bindb[bin_name]['in_suite'][suite]:

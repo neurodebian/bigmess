@@ -6,7 +6,7 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+""" """
 
 __docformat__ = 'restructuredtext'
 
@@ -20,12 +20,12 @@ from os.path import join as opj
 from ..cmdline.helpers import HelpAction
 from ..utils import get_cache_dir
 
-help = (
+help = (  # builtin redefined ???
     'help', ('-h', '--help', '--help-np'),
     dict(nargs=0, action=HelpAction,
          help="""show this help message and exit. --help-np forcefully disables
                  the use of a pager for displaying the help.""")
-)
+    )
 
 version = (
     'version', ('--version',),

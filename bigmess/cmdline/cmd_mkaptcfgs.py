@@ -24,9 +24,11 @@ lgr = logging.getLogger(__name__)
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
+
 def setup_parser(parser):
     parser.add_argument('-d', '--dest-dir', default=os.curdir,
-        help="""target directory for storing the generated lists""")
+                        help="""target directory for storing the generated lists""")
+
 
 def run(args):
     for release in cfg.options('release names'):

@@ -31,15 +31,18 @@ lgr = logging.getLogger(__name__)
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
+
 def setup_parser(parser):
     parser_add_common_args(parser, opt=('pkgdb',))
     parser.add_argument('-d', '--dest-dir', default=os.curdir,
-        help="""target directory for storing the generated pages""")
+                        help="""target directory for storing the generated pages""")
+
 
 def _write_page(page, destdir, fname):
     of = codecs.open(opj(destdir, '%s.rst' % fname), 'wb', 'utf-8')
     of.write(page)
     of.close()
+
 
 def run(args):
     lgr.debug("using package DB at '%s'" % args.pkgdb)
@@ -69,7 +72,7 @@ def run(args):
             try:
                 mname, memail = re.match(r'(.*) <(.*)>', maint).groups()
             except AttributeError:
-                lgr.warning('malformed maintainer listing for %s: %s' %(pname, maint))
+                lgr.warning('malformed maintainer listing for %s: %s' % (pname, maint))
                 mname = memail = maint
             # normalize
             memail = memail.lower()
@@ -86,45 +89,42 @@ def run(args):
         label = 'toc_pkgs_for_suite_%s' % suite_name
         title = 'Packages for %s' % cfg.get('release names', suite_name)
         suite_tocs[label] = title
-        page = bintoc_template.render(
-                label=label,
-                title=title,
-                pkgs=suite_content,
-                db=bindb) 
+        page = bintoc_template.render(label=label,
+                                      title=title,
+                                      pkgs=suite_content,
+                                      db=bindb) 
         _write_page(page, args.dest_dir, label)
     field_tocs = toctoc['field']
     for field_name, field_content in by_field.iteritems():
         label = 'toc_pkgs_for_field_%s' % field_name
         title = 'Packages for %s' % field_name
         field_tocs[label] = title
-        page = bintoc_template.render(
-                label=label,
-                title=title,
-                pkgs=field_content,
-                db=bindb) 
+        page = bintoc_template.render(label=label,
+                                      title=title,
+                                      pkgs=field_content,
+                                      db=bindb)
         _write_page(page, args.dest_dir, label)
     # full TOC
-    _write_page(bintoc_template.render(
-                    label='toc_all_pkgs',
-                    title='Complete package list',
-                    pkgs=bindb.keys(),
-                    db=bindb),
+    _write_page(bintoc_template.render(label='toc_all_pkgs',
+                                       title='Complete package list',
+                                       pkgs=bindb.keys(),
+                                       db=bindb),
                 args.dest_dir,
                 'toc_all_pkgs')
     # TOC by maintainer
     srctoc_template = jinja_env.get_template('srcpkg_toc.rst')
     maintainer_tocs = toctoc['maintainer']
     for memail, mpkgs in by_maintainer.iteritems():
-         label = 'toc_pkgs_for_maintainer_%s' % memail.replace('@', '_at_')
-         title = 'Packages made by %s <%s>' % (maintainer_name[memail], memail)
-         maintainer_tocs[label] = title
-         page = srctoc_template.render(
-                label=label,
-                title=title,
-                pkgs=mpkgs,
-                srcdb=srcdb,
-                bindb=bindb)
-         _write_page(page, args.dest_dir, label)
+        label = 'toc_pkgs_for_maintainer_%s' % memail.replace('@', '_at_')
+        title = 'Packages made by %s <%s>' % (maintainer_name[memail], memail)
+        maintainer_tocs[label] = title
+        page = srctoc_template.render(
+            label=label,
+            title=title,
+            pkgs=mpkgs,
+            srcdb=srcdb,
+            bindb=bindb)
+        _write_page(page, args.dest_dir, label)
 
     # TOC of TOCs
     toctoc_template = jinja_env.get_template('pkg_tocs.rst')

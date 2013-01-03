@@ -14,17 +14,20 @@ from ConfigParser import SafeConfigParser
 import os.path
 from os.path import join as opj
 
+
 class ConfigManager(SafeConfigParser):
     """Central configuration registry for bigmess.
 
-    The purpose of this class is to collect all configurable settings used by
-    various parts of bigmess. It is fairly simple and does only little more
-    than the standard Python ConfigParser. Like ConfigParser it is blind to the
-    data that it stores, i.e. no type checking is performed.
+    The purpose of this class is to collect all configurable settings
+    used by various parts of bigmess. It is fairly simple and does
+    only little more than the standard Python ConfigParser. Like
+    ConfigParser it is blind to the data that it stores, i.e. no type
+    checking is performed.
 
-    Configuration files (INI syntax) in multiple location are parsed when a
-    class instance is created or whenever `Config.reload()` is called later on.
-    Files are read and parsed in the following order:
+    Configuration files (INI syntax) in multiple location are parsed
+    when a class instance is created or whenever `Config.reload()` is
+    called later on.  Files are read and parsed in the following
+    order:
 
     1. '/etc/bigmess/bigmess.cfg'
     2. 'bigmess/config' in all directories defined by $XDG_CONFIG_DIRS
@@ -32,14 +35,15 @@ class ConfigManager(SafeConfigParser):
     3. 'bigmess.cfg' in $XDG_CONFIG_HOME (by default: ~/.config/)
     4. 'bigmess.cfg' in the current directory
 
-    Moreover, the constructor takes an optional argument with a list of
-    additional file names to parse afterwards.
+    Moreover, the constructor takes an optional argument with a list
+    of additional file names to parse afterwards.
 
-    In addition to configuration files, this class also looks for special
-    environment variables to read settings from. Names of such variables have to
-    start with `BIGMESS_` following by the an optional section name and the
-    variable name itself ('_' as delimiter). If no section name is provided,
-    the variables will be associated with section `general`. Some examples::
+    In addition to configuration files, this class also looks for
+    special environment variables to read settings from. Names of such
+    variables have to start with `BIGMESS_` following by the an
+    optional section name and the variable name itself ('_' as
+    delimiter). If no section name is provided, the variables will be
+    associated with section `general`. Some examples::
 
         BIGMESS_VERBOSE=1
 
@@ -68,12 +72,7 @@ class ConfigManager(SafeConfigParser):
     """
 
     # things we want to count on to be available
-    _DEFAULTS = {'general':
-                  {
-                    'verbose': '1',
-                  }
-                }
-
+    _DEFAULTS = {'general': {'verbose': '1'}}
 
     def __init__(self, filenames=None):
         """Initialization reads settings from config files and env. variables.
@@ -85,16 +84,15 @@ class ConfigManager(SafeConfigParser):
         SafeConfigParser.__init__(self)
 
         # set critical defaults
-        for sec, vars in ConfigManager._DEFAULTS.iteritems():
+        for sec, params in ConfigManager._DEFAULTS.iteritems():
             self.add_section(sec)
-            for key, value in vars.iteritems():
+            for key, value in params.iteritems():
                 self.set(sec, key, value)
 
         self.__cfg_filenames = []
 
         # now get the setting
         self.reload(filenames)
-
 
     def reload(self, filenames=None):
         """Re-read settings from all configured locations.
@@ -103,35 +101,32 @@ class ConfigManager(SafeConfigParser):
         if not filenames is None:
             self.__cfg_filenames = filenames
 
-        # listof filenames to parse (custom plus some standard ones), they are
-        # listed in the order they need to be parsed to guarantee a sane
-        # configuration file cascade
-        homedir = os.path.expanduser('~')
+        # list of filenames to parse (custom plus some standard ones),
+        # they are listed in the order they need to be parsed to
+        # guarantee a sane configuration file cascade
+        homedir = os.path.expanduser('~')  # seems to be useless ???
         cfg_file_candidates = [
-                # shipped-with config
-                opj(os.path.dirname(__file__), 'bigmess.cfg'),
-                # system config
-                '/etc/bigmess/bigmess.cfg'
-            ]
+            # shipped-with config
+            opj(os.path.dirname(__file__), 'bigmess.cfg'),
+            # system config
+            '/etc/bigmess/bigmess.cfg']
         # XDG system config
         cfg_file_candidates += [opj(b, 'bigmess', 'config') for b in
-                                        os.environ.get("XDG_CONFIG_DIRS",
-                                              "/etc/xdg").split(":")
-                                    if os.path.isabs(b)]
+                                os.environ.get("XDG_CONFIG_DIRS",
+                                               "/etc/xdg").split(":")
+                                if os.path.isabs(b)]
         # XDG user config
         home_cfg_base_path = opj(os.environ.get("XDG_CONFIG_HOME",
                                    os.path.expanduser("~/.config")))
         if os.path.isabs(home_cfg_base_path):
             cfg_file_candidates.append(opj(home_cfg_base_path, 'bigmess.cfg'))
         # current dir config
-        cfg_file_candidates.append(
-                'bigmess.cfg'
-            )
+        cfg_file_candidates.append('bigmess.cfg')
         # runtime config
         cfg_file_candidates += self.__cfg_filenames
 
         # read local and user-specific config
-        files = self.read(cfg_file_candidates)
+        self.read(cfg_file_candidates)
 
         # no look for variables in the environment
         for var in [v for v in os.environ.keys() if v.startswith('BIGMESS_')]:
@@ -153,7 +148,6 @@ class ConfigManager(SafeConfigParser):
             # set value
             self.set(sec, svar, os.environ[var])
 
-
     def get(self, section, option, default=None, **kwargs):
         """Wrapper around SafeConfigParser.get() with a custom default value.
 
@@ -168,10 +162,9 @@ class ConfigManager(SafeConfigParser):
             return SafeConfigParser.get(self, section, option, **kwargs)
         except ValueError, e:
             # provide somewhat descriptive error
-            raise ValueError, \
-                  "Failed to obtain value from configuration for %s.%s. " \
-                  "Original exception was: %s" % (section, option, e)
-
+            raise ValueError(
+                "Failed to obtain value from configuration for %s.%s. "
+                "Original exception was: %s" % (section, option, e))
 
     def getboolean(self, section, option, default=None):
         """Wrapper around SafeConfigParser.getboolean() with a custom default.
@@ -188,23 +181,24 @@ class ConfigManager(SafeConfigParser):
                 if hasattr(self, '_boolean_states'):
                     boolean_states = self._boolean_states
                 else:
-                    boolean_states = self.BOOLEAN_STATES
+                    boolean_states = self.BOOLEAN_STATES  # there is no BOOLEAN_STATES ???
                 if default.lower() not in boolean_states:
-                    raise ValueError, 'Not a boolean: %s' % default
+                    raise ValueError('Not a boolean: %s' % default)
                 return boolean_states[default.lower()]
 
         return SafeConfigParser.getboolean(self, section, option)
-
 
     ##REF: Name was automagically refactored
     def get_as_dtype(self, section, option, dtype, default=None):
         """Convenience method to query options with a custom default and type
 
-        This method simply wraps the base class method, but adds a `default`
-        keyword argument. The value of `default` is returned whenever the
-        config parser does not have the requested option and/or section.
+        This method simply wraps the base class method, but adds a
+        `default` keyword argument. The value of `default` is returned
+        whenever the config parser does not have the requested option
+        and/or section.
 
-        In addition, the returned value is converted into the specified `dtype`.
+        In addition, the returned value is converted into the
+        specified `dtype`.
         """
         if not self.has_option(section, option):
             return default
@@ -212,6 +206,6 @@ class ConfigManager(SafeConfigParser):
             return SafeConfigParser._get(self, section, dtype, option)
         except ValueError, e:
             # provide somewhat descriptive error
-            raise ValueError, \
-                  "Failed to obtain value from configuration for %s.%s. " \
-                  "Original exception was: %s" % (section, option, e)
+            raise ValueError(
+                "Failed to obtain value from configuration for %s.%s. "
+                "Original exception was: %s" % (section, option, e))

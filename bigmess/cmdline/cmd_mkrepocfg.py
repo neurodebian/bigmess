@@ -37,7 +37,6 @@ __docformat__ = 'restructuredtext'
 
 import argparse
 import os
-from os.path import join as opj
 from bigmess import cfg
 from jinja2 import Environment, PackageLoader, FileSystemLoader
 import codecs
@@ -46,22 +45,24 @@ lgr = logging.getLogger(__name__)
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
+
 def setup_parser(parser):
     parser.add_argument('-t', '--template',
                         help="""Path to a custom template file""")
+
 
 def run(args):
     mirror2name = {}
     mirror2url = {}
     code2relname = dict([(r, cfg.get('release names', r))
-                            for r in cfg.options('release names')
-                                if not r == 'data'])
+                         for r in cfg.options('release names')
+                         if not r == 'data'])
     if cfg.has_section('mirror names'):
         mirror2name = dict([(m, codecs.decode(cfg.get('mirror names', m), 'utf-8'))
                             for m in cfg.options('mirrors')])
     if cfg.has_section('mirrors'):
         mirror2url = dict([(m, cfg.get('mirrors', m))
-                                for m in cfg.options('mirrors')])
+                           for m in cfg.options('mirrors')])
     if not args.template is None:
         templ_dir = os.path.dirname(args.template)
         templ_basename = os.path.basename(args.template)
@@ -71,9 +72,7 @@ def run(args):
         jinja_env = Environment(loader=PackageLoader('bigmess'))
         srclist_template = jinja_env.get_template('sources_lists.rst')
     print codecs.encode(
-            srclist_template.render(code2name=code2relname,
-                                  mirror2name=mirror2name,
-                                  mirror2url=mirror2url),
-            'utf-8')
-
-
+        srclist_template.render(code2name=code2relname,
+                                mirror2name=mirror2name,
+                                mirror2url=mirror2url),
+        'utf-8')

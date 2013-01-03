@@ -17,13 +17,11 @@ __docformat__ = 'restructuredtext'
 
 import argparse
 import os
-import sys
 import re
 import codecs
 from os.path import join as opj
 from bigmess import cfg
 from .helpers import parser_add_common_args
-from pprint import PrettyPrinter
 from ..utils import load_db
 import logging
 from jinja2 import Environment, PackageLoader, FileSystemLoader
@@ -31,28 +29,29 @@ lgr = logging.getLogger(__name__)
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
+
 def setup_parser(parser):
     parser_add_common_args(parser, opt=('pkgdb',))
     parser.add_argument('-d', '--dest-dir', default=os.curdir,
-        help="""target directory for storing the generated pages""")
+                        help="""target directory for storing the generated pages""")
     parser.add_argument('-t', '--template',
                         help="""Path to a custom template file""")
     parser.add_argument('--pkgs', '--packages',
                         nargs='+',
                         help="""render pages for these binary packages""")
 
+
 def _underline_text(text, symbol):
     underline = symbol * len(text)
     return '%s\n%s\n' % (text, underline)
 
+
 def _proc_long_descr(lines):
-    descr = u''
     lines = [l.replace('% ', '%% ') for l in lines]
     lines = [l.replace(r'\t', '    ') for l in lines]
     re_leadblanks = re.compile("^ *")
     re_itemized = re.compile("^[o*-+] +")
     re_itemized_gr = re.compile("^( *)([-o*+] +)?(.*?)$")
-    re_description_gr = re.compile("^( *[^-]+ - )(.*?)$")
 
     def unwrap_lines(lines):
         out = []
@@ -60,7 +59,7 @@ def _proc_long_descr(lines):
         for l in lines:
             match = re_itemized_gr.search(l).groups()
             if ((len(match[0]) in indent_levels and match[1] is None)
-                or (len(match[0]) > max(indent_levels)+4)) \
+                or (len(match[0]) > max(indent_levels) + 4)) \
                 and match[2].strip() != '.':
                 # append to previous
                 if not out[-1].endswith(" "):
@@ -78,7 +77,8 @@ def _proc_long_descr(lines):
         return out
 
     def dedent_withlevel(lines):
-        """Dedent `lines` given in a list provide dedented lines and how much was dedented
+        """Dedent `lines` given in a list provide dedented lines and
+        how much was dedented
         """
         nleading = min([re_leadblanks.search(l).span()[1]
                         for l in lines])
@@ -100,15 +100,15 @@ def _proc_long_descr(lines):
         #     so let's first check if it is an itemized list
         itemized_match = re_itemized.search(ld[0])
         if itemized_match:
-            allow_indents = " "*itemized_match.span()[1]
+            allow_indents = " " * itemized_match.span()[1]
         else:
             allow_indents = None
         for l in ld:
-            if block is None or l.strip() == '.' \
-                   or (len(l) and ( len(block) and (
-                (l.startswith(' ') and not block[-1].startswith(' '))
-                or
-                (not l.startswith(' ') and block[-1].startswith(' '))))):
+            if block is None or l.strip() == '.'\
+                    or (len(l) and (len(block) and (
+                        (l.startswith(' ') and not block[-1].startswith(' '))
+                        or
+                        (not l.startswith(' ') and block[-1].startswith(' '))))):
                 block = []
                 blocks.append(block)
             if l.strip() != '.':
@@ -116,7 +116,7 @@ def _proc_long_descr(lines):
         if len(blocks) == 1:
             return blocks[0]
         else:
-            return [block_lines(b, level+1) for b in blocks if len(b)]
+            return [block_lines(b, level + 1) for b in blocks if len(b)]
 
     def blocks_to_rst(bls, level=0):
         # check if this block is an itemized beast
@@ -127,11 +127,11 @@ def _proc_long_descr(lines):
         for b in bls:
             if isinstance(b, list):
                 if len(b) == 1:
-                    out += " "*level + b[0] + '\n\n'
+                    out += " " * level + b[0] + '\n\n'
                 else:
-                    out += blocks_to_rst(b, level+1)
+                    out += blocks_to_rst(b, level + 1)
             else:
-                e = " "*level + b + '\n'
+                e = " " * level + b + '\n'
                 if not re_itemized.search(b):
                     pass
                     #e += '\n'
@@ -146,6 +146,7 @@ def _proc_long_descr(lines):
     bls = block_lines(ld)
     return blocks_to_rst(bls)
 
+
 def _gen_pkg_page(pname, db, pkg_template):
     bindb = db['bin']
     srcdb = db['src']
@@ -157,8 +158,8 @@ def _gen_pkg_page(pname, db, pkg_template):
 
     if 'short_description' in pkginfo:
         title = _underline_text('**%s** -- %s' % (pname,
-                                                 pkginfo['short_description']),
-                               '*')
+                                                  pkginfo['short_description']),
+                                '*')
     else:
         title = _underline_text('**%s**' % pname, '*')
     if 'long_description' in pkginfo:
@@ -167,15 +168,16 @@ def _gen_pkg_page(pname, db, pkg_template):
         long_descr = 'No description available.'
 
     availability = dict([(cfg.get('release names', k), v)
-                                for k, v in binpkginfo['in_suite'].iteritems()])
+                         for k, v in binpkginfo['in_suite'].iteritems()])
     page = pkg_template.render(
-            cfg=cfg,
-            pname=pname,
-            title=title,
-            description=long_descr,
-            availability=availability,
-            **pkginfo)
+        cfg=cfg,
+        pname=pname,
+        title=title,
+        description=long_descr,
+        availability=availability,
+        **pkginfo)
     return page
+
 
 def run(args):
     lgr.debug("using package DB at '%s'" % args.pkgdb)

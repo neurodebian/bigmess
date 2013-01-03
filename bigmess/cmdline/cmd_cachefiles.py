@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Cache package information.
-
 """
 
 __docformat__ = 'restructuredtext'
@@ -17,7 +16,6 @@ __docformat__ = 'restructuredtext'
 
 import argparse
 import os
-import shutil
 import urllib2
 import codecs
 import gzip
@@ -30,15 +28,17 @@ lgr = logging.getLogger(__name__)
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
+
 def setup_parser(parser):
     parser_add_common_args(parser, opt=('filecache',))
     parser.add_argument('-f', '--force-update', action='store_true',
                         help="force updating files already present in the cache")
 
 
-def _proc_release_file(release_filename, baseurl):
+def _proc_release_file(release_filename, baseurl):  # baseurl unused ???
     rp = deb822.Release(codecs.open(release_filename, 'r', 'utf-8'))
     return rp['Components'].split(), rp['Architectures'].split()
+
 
 def _download_file(url, dst, force_update=False):
     if os.path.isfile(dst) and not force_update:
@@ -58,8 +58,10 @@ def _download_file(url, dst, force_update=False):
         lgr.warning("cannot connect to '%s'" % url)
         return False
 
+
 def _url2filename(cache, url):
     return opj(cache, url.replace('/', '_').replace(':', '_'))
+
 
 def run(args):
     lgr.debug("using file cache at '%s'" % args.filecache)
@@ -70,7 +72,7 @@ def run(args):
                              default='').split()
     releases = cfg.options('release files')
     # for preventing unnecessary queries
-    lookupcache ={}
+    lookupcache = {}
     # ensure the cache is there
     if not os.path.exists(args.filecache):
         os.makedirs(args.filecache)
@@ -85,7 +87,8 @@ def run(args):
         for comp in comps:
             for arch in archs:
                 # also get 'Packages.gz' for each component and architecture
-                purl = '/'.join((baseurl, comp, 'binary-%s' % arch, 'Packages.gz'))
+                purl = '/'.join((baseurl, comp,
+                                 'binary-%s' % arch, 'Packages.gz'))
                 dst_path = _url2filename(args.filecache, purl)
                 if not _download_file(purl, dst_path, args.force_update):
                     continue
@@ -96,7 +99,6 @@ def run(args):
                 continue
             # TODO go through the source file and try getting 'debian/upstream'
             # from the referenced repo
-            sfile = gzip.open(dst_path)
             for spkg in deb822.Sources.iter_paragraphs(gzip.open(dst_path)):
                 # TODO pull stuff directly form VCS
                 #vcsurl = spkg.get('Vcs-Browser', None)
@@ -118,4 +120,3 @@ def run(args):
                         continue
                     _download_file(mfurl, dst_path, args.force_update)
                     lookupcache[dst_path] = None
-

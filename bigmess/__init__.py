@@ -6,14 +6,15 @@
 #   copyright and license terms.
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-""""""
+""" """
 
-__docformat__ = 'restructuredtext'
+__docformat__ = "restructuredtext"
 
 __version__ = "0.0.0+dev"
 
 import os
 from .config import ConfigManager
+
 
 class _SingletonType(type):
     """Simple singleton implementation adjusted from
@@ -28,14 +29,15 @@ class _SingletonType(type):
             mcs._instances[sid] = instance
         return mcs._instances[sid]
 
+
 class __Singleton:
     """To ensure single instance of a class instantiation (object)
-
     """
-
     __metaclass__ = _SingletonType
+
     def __init__(self, *args):
         pass
+
     # Provided __call__ just to make silly pylint happy
     def __call__(self):
         raise NotImplementedError
@@ -49,5 +51,3 @@ if _cfgfile:
     # We have to provide a list
     _cfgfile = [_cfgfile]
 cfg = __Singleton('cfg', ConfigManager(_cfgfile))
-
-

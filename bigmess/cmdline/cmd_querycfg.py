@@ -7,7 +7,6 @@
 #
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """Query the configuration.
-
 """
 
 __docformat__ = 'restructuredtext'
@@ -21,8 +20,10 @@ from bigmess import cfg
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
+
 def setup_parser(parser):
     parser.add_argument('query', nargs='*', metavar='QUERY')
+
 
 def run(args):
     query = args.query
