@@ -14,6 +14,7 @@ import os
 import bigmess
 import gzip
 import codecs
+import xdg.BaseDirectory
 from os.path import join as opj
 from pprint import PrettyPrinter
 import logging
@@ -26,8 +27,7 @@ def get_cache_dir():
     Implements XDG Base Directory Specification, hence allows overwriting the
     config setting with $XDG_CACHE_HOME.
     """
-    cacheroot = os.environ.get('XDG_CACHE_HOME',
-                               os.path.expanduser(opj('~', '.cache')))
+    cacheroot = xdg.BaseDirectory.xdg_cache_home
     if not os.path.isabs(cacheroot):
         lgr.debug("freedesktop.org standard dictates to ignore non-absolute "
                   "XDG_CACHE_HOME setting '%s'" % cacheroot)

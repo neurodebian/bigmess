@@ -12,6 +12,7 @@ __docformat__ = 'restructuredtext'
 
 from ConfigParser import SafeConfigParser
 import os.path
+import xdg.BaseDirectory
 from os.path import join as opj
 
 
@@ -111,13 +112,10 @@ class ConfigManager(SafeConfigParser):
             # system config
             '/etc/bigmess/bigmess.cfg']
         # XDG system config
-        cfg_file_candidates += [opj(b, 'bigmess', 'config') for b in
-                                os.environ.get("XDG_CONFIG_DIRS",
-                                               "/etc/xdg").split(":")
-                                if os.path.isabs(b)]
+        cfg_file_candidates += [opj(b, 'bigmess', 'config')
+                                for b in xdg.BaseDirectory.xdg_config_dirs]
         # XDG user config
-        home_cfg_base_path = opj(os.environ.get("XDG_CONFIG_HOME",
-                                   os.path.expanduser("~/.config")))
+        home_cfg_base_path = xdg.BaseDirectory.xdg_config_home
         if os.path.isabs(home_cfg_base_path):
             cfg_file_candidates.append(opj(home_cfg_base_path, 'bigmess.cfg'))
         # current dir config
