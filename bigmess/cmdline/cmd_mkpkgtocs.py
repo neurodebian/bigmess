@@ -19,16 +19,18 @@ __docformat__ = 'restructuredtext'
 import argparse
 import os
 import re
+import logging
+import codecs
+
 from os.path import join as opj
+from jinja2 import Environment as JinjaEnvironment
+from jinja2 import PackageLoader as JinjaPackageLoader
+
 from bigmess import cfg
 from .helpers import parser_add_common_args
 from ..utils import load_db
-import logging
-import codecs
-from jinja2 import Environment as JinjaEnvironment
-from jinja2 import PackageLoader as JinjaPackageLoader
-lgr = logging.getLogger(__name__)
 
+lgr = logging.getLogger(__name__)
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
 

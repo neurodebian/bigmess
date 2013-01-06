@@ -19,14 +19,16 @@ import argparse
 import os
 import re
 import codecs
+import logging
+
 from os.path import join as opj
+from jinja2 import Environment, PackageLoader, FileSystemLoader
+
 from bigmess import cfg
 from .helpers import parser_add_common_args
 from ..utils import load_db
-import logging
-from jinja2 import Environment, PackageLoader, FileSystemLoader
-lgr = logging.getLogger(__name__)
 
+lgr = logging.getLogger(__name__)
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
 

@@ -19,13 +19,15 @@ import os
 import urllib2
 import codecs
 import gzip
+import logging
+
 from debian import deb822
 from os.path import join as opj
+
 from bigmess import cfg
 from .helpers import parser_add_common_args
-import logging
-lgr = logging.getLogger(__name__)
 
+lgr = logging.getLogger(__name__)
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
 

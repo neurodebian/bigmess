@@ -37,12 +37,14 @@ __docformat__ = 'restructuredtext'
 
 import argparse
 import os
-from bigmess import cfg
-from jinja2 import Environment, PackageLoader, FileSystemLoader
 import codecs
 import logging
-lgr = logging.getLogger(__name__)
 
+from jinja2 import Environment, PackageLoader, FileSystemLoader
+
+from bigmess import cfg
+
+lgr = logging.getLogger(__name__)
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
 

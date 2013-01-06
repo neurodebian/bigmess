@@ -10,10 +10,11 @@
 
 __docformat__ = 'restructuredtext'
 
-from ConfigParser import SafeConfigParser
 import os.path
 import xdg.BaseDirectory
+
 from os.path import join as opj
+from ConfigParser import SafeConfigParser
 
 
 class ConfigManager(SafeConfigParser):

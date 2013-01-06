@@ -17,11 +17,13 @@ __docformat__ = 'restructuredtext'
 
 import argparse
 import os
-from os.path import join as opj
-from bigmess import cfg
 import logging
-lgr = logging.getLogger(__name__)
 
+from os.path import join as opj
+
+from bigmess import cfg
+
+lgr = logging.getLogger(__name__)
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
 

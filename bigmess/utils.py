@@ -11,13 +11,16 @@
 __docformat__ = 'restructuredtext'
 
 import os
-import bigmess
 import gzip
 import codecs
 import xdg.BaseDirectory
-from os.path import join as opj
-from pprint import PrettyPrinter
 import logging
+
+from pprint import PrettyPrinter
+from os.path import join as opj
+
+import bigmess
+
 lgr = logging.getLogger(__name__)
 
 

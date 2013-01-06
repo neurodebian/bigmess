@@ -20,16 +20,18 @@ import os
 import codecs
 import gzip
 import yaml
-from debian import deb822
 import apt_pkg
-apt_pkg.init_system()
+import logging
+
+from debian import deb822
 from os.path import join as opj
+
 from bigmess import cfg
 from ..utils import load_db, save_db
 from .helpers import parser_add_common_args
-import logging
-lgr = logging.getLogger(__name__)
 
+apt_pkg.init_system()
+lgr = logging.getLogger(__name__)
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
 

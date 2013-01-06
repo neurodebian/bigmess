@@ -16,6 +16,7 @@ __docformat__ = 'restructuredtext'
 
 import argparse
 import sys
+
 from bigmess import cfg
 
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
