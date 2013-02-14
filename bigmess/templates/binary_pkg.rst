@@ -5,8 +5,10 @@
 
 .. container:: package_info_links
 
+{% for bin in binary|sort if not bin == pname %}
+{%- if loop.first %}
   Related packages
-{%- for bin in binary|sort if not bin == pname %}
+{%- endif %}
     * :ref:`{{ bin }} <binary_pkg_{{ bin }}>`
 {%- endfor %}
 
