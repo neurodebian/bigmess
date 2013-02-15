@@ -78,3 +78,32 @@ def parser_add_common_opt(parser, opt, names=None, **kwargs):
         parser.add_argument(*opt_tmpl[1], **opt_kwargs)
     else:
         parser.add_argument(*names, **opt_kwargs)
+
+def get_build_option(optname, cli_input=None, family=None, default=None):
+    """Determine build option value.
+
+    If there was input from the command line it takes precedence. Otherwise
+    an existing family-specific option value is chosen, or a non-family
+    specific default is returned. If neither condition is valid, ``default`` is
+    returned.
+
+    Parameters
+    ----------
+    optname : str
+      Option name
+    cli_input
+      Potential input from a corresponding command line option
+    family : str
+      Optional build family identifier
+    default :
+      Value to return if no information is available
+    """
+    from bigmess import cfg
+    if not cli_input is None:
+        # got something meaningful as a commandline arg -- got with it
+        return cli_input
+    if not family is None and cfg.has_option('build', '%s %s' % (family, optname)):
+        return cfg.get('build', '%s %s' % (family, optname))
+    if cfg.has_option('build', optname):
+        return cfg.get('build', optname)
+    return default
