@@ -40,6 +40,8 @@ manpages: mkdir-MAN_DIR
 			--help-option="--help-np" -N -n "$$summary" \
 				"bin/bigmess $${cmd}" > $(MAN_DIR)/bigmess-$${cmd}.1 ; \
 	done
+	help2man -h '--verbose-help' --no-info bin/backport-dsc \
+		-n "backport Debian source packages" > $(MAN_DIR)/backport-dsc.1
 
 test:
 	PYTHONPATH=$(LPYTHONPATH) $(NOSETESTS) \
