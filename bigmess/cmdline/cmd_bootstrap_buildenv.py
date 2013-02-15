@@ -44,26 +44,12 @@ lgr = logging.getLogger(__name__)
 parser_args = dict(formatter_class=argparse.RawDescriptionHelpFormatter)
 
 def setup_parser(parser):
-    parser.add_argument('--env', nargs=2, action='append',
-            help="""which build environment to bootstrap. This first argument
-            must be a known environment family name, while the second argument
-            is a codename for a particular suite, for example:
-            'debian' 'wheezy'. If this option is not given, all configured
-            environments are going to be bootstrapped.""")
-    parser.add_argument('--aptcache', metavar='PATH',
-            help="""override cache location for APT. Setting this to an empty
-            string disables local caching entirely.""")
-    parser.add_argument('--chroot-basedir', metavar='PATH',
-            help="""override configured base directory for stored build
-            environments (chroots, basetgz).""")
-    parser.add_argument('--arch', nargs='+',
-            help="""list of architectures to bootstrap environments for.""")
+    parser_add_common_args(parser,
+                           opt=('environments', 'aptcache', 'chroot_basedir',
+                                'architectures', 'builder'))
     parser.add_argument('--components', nargs='+',
             help="""list of archive components to enable in the build
-            environment. For example: main contrib non-free.""")
-    parser.add_argument('--builder', choices=('cowbuilder', 'pbuilder'),
-            help="""type of tools to use for bootstrapping the build
-            environment.""")
+            environment. For example: main contrib non-free""")
 
 def _proc_env(family, codename, args):
     aptcache = args.aptcache
@@ -146,4 +132,3 @@ def run(args):
         family, codename = env
         _proc_env(family, codename, args)
         lgr.debug("finished bootstrapping environment '%s'" % env)
-
