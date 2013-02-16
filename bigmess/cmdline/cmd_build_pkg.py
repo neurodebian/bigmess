@@ -19,7 +19,7 @@ Examples:
 __docformat__ = 'restructuredtext'
 
 # magic line for manpage summary
-# man: -*- % update a build environment for a distribution
+# man: -*- % build a package in one or more environments
 
 import argparse
 import sys
@@ -79,7 +79,7 @@ def _proc_env(family, codename, args):
                                                   'bigmess', 'chroots'))
     lgr.debug("using chroot base directory at '%s'" % chroot_basedir)
     builder = get_build_option('builder', args.builder, family, default='pbuilder')
-    lgr.debug("using '%s' for updating" % builder)
+    lgr.debug("using '%s' for building" % builder)
 
     aptcache = get_build_option('aptcache', args.aptcache, family)
     if aptcache:
@@ -161,46 +161,46 @@ def _proc_env(family, codename, args):
 
     for arch in archs:
         lgr.debug("started building for architecture '%s'" % arch)
-        chroot_target = opj(args.chroot_basedir,
+        chroot_target = opj(chroot_basedir,
                             '%s-%s-%s' % (family, codename, arch))
-        if args.builder == 'pbuilder':
+        if builder == 'pbuilder':
             cmd_opts += ['--basetgz', '%s.tar.gz' % chroot_target]
-        elif args.builder == 'cowbuilder':
+        elif builder == 'cowbuilder':
             cmd_opts += ['--basepath', chroot_target]
         else:
-            raise ValueError("unknown builder '%s'" % args.builder)
+            raise ValueError("unknown builder '%s'" % builder)
         if args.backport:
-            sp_args = ['sudo', args.builder] + cmd_opts + [backported_dsc]
+            sp_args = ['sudo', builder] + cmd_opts + [backported_dsc]
         else:
-            sp_args = ['sudo', args.builder] + cmd_opts + [args.dsc] 
+            sp_args = ['sudo', builder] + cmd_opts + [args.dsc] 
         # make log file
         dsc = deb822.Dsc(open(sp_args[-1]))
         dsc.update({'buildtime': int(time.time()), 'arch': arch})
-        with open(opj(args.result_dir,
+        with open(opj(result_dir,
                       '%(Source)s_%(Version)s_%(arch)s_%(buildtime)s.build' % dsc),
                   'w') as logfile:
             lgr.info("build log at '%s'" % logfile.name)
             ret = subprocess.call(sp_args,
                                   stderr=subprocess.STDOUT,
                                   stdout=logfile) 
-            summaryline = '%s %s' % (family, codename)
-            summaryline += '%(Source)s %(Version)s %(arch)s %(buildtime)s ' % dsc
-            with open(opj(args.result_dir, 'build_summary.log'), 'a+') \
+            summaryline = '%s %s ' % (family, codename)
+            summaryline += '%(arch)s %(Source)s %(Version)s %(buildtime)s ' % dsc
+            with open(opj(result_dir, 'build_summary.log'), 'a+') \
                     as summary_file:
                 if ret:
-                    logline += 'FAILED\n'
-                    summary_file.write(logline)
+                    summaryline += 'FAILED\n'
+                    summary_file.write(summaryline)
                     raise RuntimeError("building failed (cmd: '%s'; exit code: %s)"
-                                       % ('%s %s' % (args.builder, ' '.join(cmd_opts)),
+                                       % ('%s %s' % (builder, ' '.join(cmd_opts)),
                                           ret))
-                logline += 'OK\n'
-                summary_file.write(logline)
+                summaryline += 'OK\n'
+                summary_file.write(summaryline)
         lgr.debug("finished building for architecture '%s'" % arch)
 
 def run(args):
     if args.env is None:
         args.env = [env.split('-') for env in cfg.get('build', 'environments', default='').split()]
-    lgr.debug("attempting to update %i environments: %s" % (len(args.env), args.env))
+    lgr.debug("attempting to build in %i environments: %s" % (len(args.env), args.env))
     for family, codename in args.env:
         lgr.debug("started building in environment '%s-%s'" % (family, codename))
         _proc_env(family, codename, args)
