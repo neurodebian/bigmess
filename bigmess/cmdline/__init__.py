@@ -11,9 +11,13 @@
 __docformat__ = 'restructuredtext'
 
 import cmd_cachefiles
+import cmd_bootstrap_buildenv
+import cmd_build_pkg
 import cmd_querycfg
-import cmd_updatedb
 import cmd_mkpkgs
 import cmd_mkaptcfgs
 import cmd_mkrepocfg
 import cmd_mkpkgtocs
+import cmd_run_buildenv
+import cmd_updatedb
+import cmd_update_buildenv
