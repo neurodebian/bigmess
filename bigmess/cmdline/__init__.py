@@ -13,6 +13,7 @@ __docformat__ = 'restructuredtext'
 import cmd_cachefiles
 import cmd_bootstrap_buildenv
 import cmd_build_pkg
+import cmd_build_pkg_condor
 import cmd_querycfg
 import cmd_mkpkgs
 import cmd_mkaptcfgs
