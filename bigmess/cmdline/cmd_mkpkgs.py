@@ -22,7 +22,6 @@ import codecs
 import logging
 
 from os.path import join as opj
-from jinja2 import Environment, PackageLoader, FileSystemLoader
 
 from bigmess import cfg
 from .helpers import parser_add_common_args
@@ -182,6 +181,7 @@ def _gen_pkg_page(pname, db, pkg_template):
 
 
 def run(args):
+    from jinja2 import Environment, PackageLoader, FileSystemLoader
     lgr.debug("using package DB at '%s'" % args.pkgdb)
     if not args.template is None:
         templ_dir = os.path.dirname(args.template)

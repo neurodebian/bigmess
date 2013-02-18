@@ -40,8 +40,6 @@ import os
 import codecs
 import logging
 
-from jinja2 import Environment, PackageLoader, FileSystemLoader
-
 from bigmess import cfg
 
 lgr = logging.getLogger(__name__)
@@ -54,6 +52,8 @@ def setup_parser(parser):
 
 
 def run(args):
+    from jinja2 import Environment, PackageLoader, FileSystemLoader
+
     mirror2name = {}
     mirror2url = {}
     code2relname = dict([(r, cfg.get('release names', r))

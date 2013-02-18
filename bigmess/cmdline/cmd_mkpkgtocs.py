@@ -23,8 +23,6 @@ import logging
 import codecs
 
 from os.path import join as opj
-from jinja2 import Environment as JinjaEnvironment
-from jinja2 import PackageLoader as JinjaPackageLoader
 
 from bigmess import cfg
 from .helpers import parser_add_common_args
@@ -47,6 +45,8 @@ def _write_page(page, destdir, fname):
 
 
 def run(args):
+    from jinja2 import Environment as JinjaEnvironment
+    from jinja2 import PackageLoader as JinjaPackageLoader
     lgr.debug("using package DB at '%s'" % args.pkgdb)
     # read entire DB
     db = load_db(args.pkgdb)

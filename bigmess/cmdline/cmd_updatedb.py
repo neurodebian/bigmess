@@ -19,7 +19,6 @@ import argparse
 import os
 import codecs
 import gzip
-import yaml
 import apt_pkg
 import logging
 
@@ -101,6 +100,7 @@ def run(args):
                             bindb[b]['src_name'] = src_name
                             bindb[b]['latest_version'] = src_version
                 if 'upstream' in meta_filenames and not meta_baseurl is None:
+                    import yaml
                     mfn = 'upstream'
                     mfurl = '/'.join((meta_baseurl, src_name, mfn))
                     mfpath = _url2filename(args.filecache, mfurl)
