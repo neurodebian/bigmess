@@ -134,7 +134,7 @@ def _proc_env(family, codename, args):
         lgr.debug('attempting to backport source package')
         bp_success = False
         bp_cmd = ['backport-dsc'] + bp_args + [args.dsc]
-        lgr.debug("calling: '%s'" % ' '.join(bp_cmd))
+        lgr.debug("calling: %s" % bp_cmd)
         # use check_output() with 2.7+
         bp_proc = subprocess.Popen(bp_cmd, stdout=subprocess.PIPE)
         output, unused_err = bp_proc.communicate()
@@ -150,7 +150,8 @@ def _proc_env(family, codename, args):
 
     archs = get_build_option('architectures', args.arch, family)
     if not archs is None:
-        archs = archs.split()
+        if not isinstance(archs, list):
+            archs = archs.split()
 
     if _get_arch_from_dsc(args.dsc) == 'all':
         # where to build arch:all packages
