@@ -1,2 +1,16 @@
 @import url("basic.css");
 @import url("agogo.css");
+
+.header-wrapper,
+.content-wrapper,
+.footer-wrapper {
+  padding-left: 10px;
+}
+
+pre {
+  border-top: 1px solid #999;
+  border-bottom: 1px solid #999;
+  background-color: #eee;
+  margin: .5em;
+  padding: .5em;
+}

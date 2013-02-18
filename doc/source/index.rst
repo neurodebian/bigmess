@@ -37,6 +37,8 @@ Documentation
 .. toctree::
    :maxdepth: 2
 
+   build_packages
+
 Indices and tables
 ==================
 
