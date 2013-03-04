@@ -42,7 +42,7 @@ def _proc_release_file(release_filename, baseurl):  # baseurl unused ???
     return rp['Components'].split(), rp['Architectures'].split()
 
 
-def _download_file(url, dst, force_update=False):
+def _download_file(url, dst, force_update=False, ignore_missing=False):
     if os.path.isfile(dst) and not force_update:
         lgr.debug("skip '%s'->'%s' (file exists)" % (url, dst))
         return True
@@ -54,7 +54,8 @@ def _download_file(url, dst, force_update=False):
         fp.close()
         return True
     except urllib2.HTTPError:
-        lgr.warning("cannot find '%s'" % url)
+        if not ignore_missing:
+            lgr.warning("cannot find '%s'" % url)
         return False
     except urllib2.URLError:
         lgr.warning("cannot connect to '%s'" % url)
@@ -120,5 +121,6 @@ def run(args):
                     dst_path = _url2filename(args.filecache, mfurl)
                     if dst_path in lookupcache:
                         continue
-                    _download_file(mfurl, dst_path, args.force_update)
+                    _download_file(mfurl, dst_path, args.force_update,
+                                   ignore_missing=True)
                     lookupcache[dst_path] = None
