@@ -99,7 +99,8 @@ def run(args):
         'request_memory': args.condor_request_memory,
         'files': ','.join([argv[-1]] + [opj(dsc_dir, f['name']) for f in dsc['Files']]),
         'src_name': dsc['Source'],
-        'src_version': dsc['Version']
+        'src_version': dsc['Version'],
+        'executable': argv[0]
     }
     submit = """
 universe = vanilla
@@ -110,6 +111,8 @@ transfer_executable = FALSE
 transfer_input_files = %(files)s
 request_memory = %(request_memory)i
 nice_user = %(niceuser)s
+
+executable = %(executable)s
 """ % settings
 
 
@@ -119,13 +122,13 @@ nice_user = %(niceuser)s
         if not os.path.exists(logdir):
             os.makedirs(logdir)
         archs = get_build_option('architectures', args.arch, family)
+	# TODO limit to default arch for arch:all packages
         if isinstance(archs, basestring):
             archs = archs.split()
         for arch in archs:
             arch_settings = {
                 'condorlog': os.path.abspath(logdir),
                 'arch': arch,
-                'executable': argv[0],
                 'arguments': ' '.join(argv[1:-1]
                                       + ['--env', family, codename,
                                          '--build-basedir', 'buildbase',
@@ -135,7 +138,6 @@ nice_user = %(niceuser)s
             }
             arch_settings.update(settings)
             submit += """
-executable = %(executable)s
 arguments = %(arguments)s
 error = %(condorlog)s/%(src_name)s_%(src_version)s_%(arch)s.$(Cluster).$(Process).err
 output = %(condorlog)s/%(src_name)s_%(src_version)s_%(arch)s.$(Cluster).$(Process).out
