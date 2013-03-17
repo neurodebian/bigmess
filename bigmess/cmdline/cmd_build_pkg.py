@@ -66,6 +66,45 @@ def setup_parser(parser):
             for details""")
     parser.add_argument('dsc')
 
+
+def _backport_dsc(dsc, codename, family, args):
+    # assemble backport-dsc call
+    bp_args = ['--target-distribution', codename]
+    bp_mod_control = get_build_option('backport modify control',
+                                      args.bp_mod_control,
+                                      family)
+    if not bp_mod_control is None:
+        bp_args += ['--mod-control', bp_mod_control]
+    bp_maintainer = get_build_option('backport maintainer',
+                                     args.bp_maintainer,
+                                     family)
+    if not bp_maintainer is None:
+        bp_args += [
+            '--maint-name', bp_maintainer.split('<')[0].strip(),
+            '--maint-email', bp_maintainer.split('<')[1].strip()[:-1],
+        ]
+    if cfg.has_option('codename backport ids', codename):
+        bp_args += ['--version-suffix',
+                    cfg.get('codename backport ids', codename)]
+    lgr.debug('attempting to backport source package')
+    bp_success = False
+    bp_cmd = ['backport-dsc'] + bp_args + [dsc]
+    lgr.debug("calling: %s" % bp_cmd)
+    # use check_output() with 2.7+
+    bp_proc = subprocess.Popen(bp_cmd, stdout=subprocess.PIPE)
+    output, unused_err = bp_proc.communicate()
+    retcode = bp_proc.poll()
+    if retcode:
+        raise RuntimeError("failed to run 'backport-dsc'")
+    for line in output.split('\n'):
+        if line.endswith('.dsc'):
+            backported_dsc = line.split()[-1]
+            bp_success = True
+    if not bp_success:
+        raise RuntimeError("failure to parse output of 'backport-dsc'")
+    return backported_dsc
+
+
 def _get_arch_from_dsc(fname):
     for line in open(fname, 'r'):
         if line.startswith('Architecture:'):
@@ -113,40 +152,7 @@ def _proc_env(family, codename, args):
 
     # backport
     if args.backport:
-        # assemble backport-dsc call
-        bp_args = ['--target-distribution', codename]
-        bp_mod_control = get_build_option('backport modify control',
-                                          args.bp_mod_control,
-                                          family)
-        if not bp_mod_control is None:
-            bp_args += ['--mod-control', bp_mod_control]
-        bp_maintainer = get_build_option('backport maintainer',
-                                         args.bp_maintainer,
-                                         family)
-        if not bp_maintainer is None:
-            bp_args += [
-                '--maint-name', bp_maintainer.split('<')[0].strip(),
-                '--maint-email', bp_maintainer.split('<')[1].strip()[:-1],
-            ]
-        if cfg.has_option('codename backport ids', codename):
-            bp_args += ['--version-suffix',
-                        cfg.get('codename backport ids', codename)]
-        lgr.debug('attempting to backport source package')
-        bp_success = False
-        bp_cmd = ['backport-dsc'] + bp_args + [args.dsc]
-        lgr.debug("calling: %s" % bp_cmd)
-        # use check_output() with 2.7+
-        bp_proc = subprocess.Popen(bp_cmd, stdout=subprocess.PIPE)
-        output, unused_err = bp_proc.communicate()
-        retcode = bp_proc.poll()
-        if retcode:
-            raise RuntimeError("failed to run 'backport-dsc'")
-        for line in output.split('\n'):
-            if line.endswith('.dsc'):
-                backported_dsc = line.split()[-1]
-                bp_success = True
-        if not bp_success:
-            raise RuntimeError("failure to parse output of 'backport-dsc'")
+        backported_dsc = _backport_dsc(args.dsc, codename, family, args)
 
     archs = get_build_option('architectures', args.arch, family)
     if not archs is None:
@@ -160,6 +166,7 @@ def _proc_env(family, codename, args):
     if archs is None:
         raise ValueError("no architectures specified, use --arch or add to configuration file")
 
+    had_failures = False
     for arch in archs:
         lgr.debug("started building for architecture '%s'" % arch)
         chroot_target = opj(chroot_basedir,
@@ -191,19 +198,24 @@ def _proc_env(family, codename, args):
                 if ret:
                     summaryline += 'FAILED\n'
                     summary_file.write(summaryline)
-                    raise RuntimeError("building failed (cmd: '%s'; exit code: %s)"
+                    had_failures = True
+                    lgr.warning("building failed (cmd: '%s'; exit code: %s)"
                                        % ('%s %s' % (builder, ' '.join(cmd_opts)),
                                           ret))
                 summaryline += 'OK\n'
                 summary_file.write(summaryline)
         lgr.debug("finished building for architecture '%s'" % arch)
+    return had_failures
 
 def run(args):
     if args.env is None:
         args.env = [env.split('-') for env in cfg.get('build', 'environments', default='').split()]
     lgr.debug("attempting to build in %i environments: %s" % (len(args.env), args.env))
+    had_failure = False
     for family, codename in args.env:
         lgr.debug("started building in environment '%s-%s'" % (family, codename))
-        _proc_env(family, codename, args)
+        if _proc_env(family, codename, args):
+            had_failures = True
         lgr.debug("finished building in environment '%s-%s'" % (family, codename))
-
+    if had_failures:
+        raise RuntimeError("some builds failed")

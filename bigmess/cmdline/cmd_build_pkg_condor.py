@@ -47,6 +47,7 @@ import sys
 from os.path import join as opj
 from bigmess import cfg
 from .helpers import parser_add_common_args, get_build_option
+from .cmd_build_pkg import _backport_dsc
 import logging
 lgr = logging.getLogger(__name__)
 
@@ -69,35 +70,49 @@ def setup_parser(parser):
 
 def run(args):
     if args.env is None:
+        # what to build for by default
         args.env = [env.split('-') for env in cfg.get('build', 'environments', default='').split()]
     lgr.debug("attempting to build in %i environments: %s" % (len(args.env), args.env))
-    # post process argv
+    # post process argv to ready them for a subsequent build_pkg command
     argv = []
     i = 0
     while i < len(sys.argv):
         av = sys.argv[i]
+        print av
         if av == '--env':
+            # ignore, there will be individual build_pkg call per environment
             i += 2
         elif av == '--arch':
+            # ignore, there will be individual build_pkg call per arch
+            i += 1
             while i < len(sys.argv) - 1 and not sys.argv[i+1].startswith('-'):
                 i += 1
         elif av == '--':
             pass
         elif av.startswith('--condor-'):
+            # handled in this call
             i += 1
         elif av.startswith('--build-basedir'):
+            # to be ignored for a condor submission
             i += 1
+        elif av == '--backport':
+            # backporting is done in this call, prior to build_pkg
+            pass
         elif av == 'build_pkg_condor':
             argv.append('build_pkg')
         else:
+            # pass on the rest
             argv.append(av)
         i += 1
-    dsc = deb822.Dsc(open(argv[-1]))
-    dsc_dir = os.path.dirname(argv[-1])
+    print argv
+    # make dsc arg explicit
+    dsc_fname = argv[-1]
+    print argv
+    argv = argv[:-1]
+    dsc = deb822.Dsc(open(dsc_fname))
     settings = {
         'niceuser': args.condor_nice_user,
         'request_memory': args.condor_request_memory,
-        'files': ','.join([argv[-1]] + [opj(dsc_dir, f['name']) for f in dsc['Files']]),
         'src_name': dsc['Source'],
         'src_version': dsc['Version'],
         'executable': argv[0]
@@ -108,15 +123,26 @@ should_transfer_files = YES
 getenv = True
 notification = Never
 transfer_executable = FALSE
-transfer_input_files = %(files)s
 request_memory = %(request_memory)i
 nice_user = %(niceuser)s
-
 executable = %(executable)s
 """ % settings
 
 
     for family, codename in args.env:
+        # do any backports locally
+        if args.backport:
+            lgr.info("backporting to %s-%s" % (family, codename))
+            dist_dsc_fname = _backport_dsc(dsc_fname, codename, family, args)
+        else:
+            dist_dsc_fname = dsc_fname
+        dist_dsc = deb822.Dsc(open(dist_dsc_fname))
+        dist_dsc_dir = os.path.dirname(dist_dsc_fname)
+        submit += "\n# %s-%s\ntransfer_input_files = %s" \
+                  % (family, codename,
+                     ','.join([dist_dsc_fname]
+                             + [opj(dist_dsc_dir, f['name'])
+                                  for f in dist_dsc['Files']]))
         # logfile destination?
         logdir = get_build_option('condor logdir', args.condor_logdir, family, default=os.curdir)
         if not os.path.exists(logdir):
@@ -126,28 +152,30 @@ executable = %(executable)s
         if isinstance(archs, basestring):
             archs = archs.split()
         for arch in archs:
+            print argv
             arch_settings = {
                 'condorlog': os.path.abspath(logdir),
                 'arch': arch,
-                'arguments': ' '.join(argv[1:-1]
+                'arguments': ' '.join(argv[1:]
                                       + ['--env', family, codename,
                                          '--build-basedir', 'buildbase',
                                          '--arch', arch,
                                          '--']
-                                      + [os.path.basename(argv[-1])]),
+                                      + [os.path.basename(dist_dsc_fname)]),
             }
             arch_settings.update(settings)
             submit += """
+# %(arch)s
 arguments = %(arguments)s
 error = %(condorlog)s/%(src_name)s_%(src_version)s_%(arch)s.$(Cluster).$(Process).err
 output = %(condorlog)s/%(src_name)s_%(src_version)s_%(arch)s.$(Cluster).$(Process).out
 log = %(condorlog)s/%(src_name)s_%(src_version)s_%(arch)s.$(Cluster).$(Process).log
 queue
-
 """ % arch_settings
+    print submit
     # store submit file
-    condor_submit = subprocess.Popen(['condor_submit'], stdin=subprocess.PIPE)
-    condor_submit.communicate(input=submit)
-    if condor_submit.wait():
-        print argv
-        raise RuntimeError("could not submit build; SPEC follows\n---\n%s---\n)" % submit)
+    #condor_submit = subprocess.Popen(['condor_submit'], stdin=subprocess.PIPE)
+    #condor_submit.communicate(input=submit)
+    #if condor_submit.wait():
+    #    print argv
+    #    raise RuntimeError("could not submit build; SPEC follows\n---\n%s---\n)" % submit)
