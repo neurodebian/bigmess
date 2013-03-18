@@ -107,3 +107,13 @@ def get_build_option(optname, cli_input=None, family=None, default=None):
     if cfg.has_option('build', optname):
         return cfg.get('build', optname)
     return default
+
+def arg2bool(arg):
+    arg = arg.lower()
+    if arg in ['0', 'no', 'off', 'disable', 'false']:
+        return False
+    elif arg in ['1', 'yes', 'on', 'enable', 'true']:
+        return True
+    else:
+        raise argparse.ArgumentTypeError(
+                "'%s' cannot be converted into a boolean" % arg)

@@ -30,7 +30,7 @@ import subprocess
 import os
 from os.path import join as opj
 from bigmess import cfg
-from .helpers import parser_add_common_args, get_build_option
+from .helpers import parser_add_common_args, get_build_option, arg2bool
 import logging
 lgr = logging.getLogger(__name__)
 
@@ -48,8 +48,13 @@ def setup_parser(parser):
     parser.add_argument('--arch-all-arch', metavar='ARCH',
             help="""environment architecture to be used for building arch 'all'
             packages. Default: 'amd64'""")
+    parser.add_argument('--source-include', type=arg2bool,
+            help="""if true, equivalent to option -sa for dpkg-build-package,
+            but is only in effect once for each source package in a batch build
+            """)
     parser.add_argument('--debbuild-options',
-            help="""options to be pass onto dpkg-buildpackage""")
+            help="""options to be pass onto dpkg-buildpackage, don't use this
+            for: -sa, -B and friends. Look at --source-include instead.""")
     parser.add_argument('--backport', action='store_true',
             help="""if enabled source packages will be automatically backported
             via backport-dsc, which is using the code name of a corresponding
@@ -104,19 +109,24 @@ def _backport_dsc(dsc, codename, family, args):
         raise RuntimeError("failure to parse output of 'backport-dsc'")
     return backported_dsc
 
-
-def _get_arch_from_dsc(fname):
-    for line in open(fname, 'r'):
-        if line.startswith('Architecture:'):
-            return line.split(':')[1].strip()
-
-def _proc_env(family, codename, args):
+def _get_chroot_base(family, codename, arch, args):
     chroot_basedir = get_build_option('chroot basedir',
                                       args.chroot_basedir,
                                       family,
                                       default=opj(xdg.BaseDirectory.xdg_data_home,
                                                   'bigmess', 'chroots'))
     lgr.debug("using chroot base directory at '%s'" % chroot_basedir)
+    chroot_target = opj(chroot_basedir,
+                        '%s-%s-%s' % (family, codename, arch))
+    return chroot_target
+
+
+def _get_arch_from_dsc(fname):
+    for line in open(fname, 'r'):
+        if line.startswith('Architecture:'):
+            return line.split(':')[1].strip()
+
+def _proc_env(family, codename, args, source_include):
     builder = get_build_option('builder', args.builder, family, default='pbuilder')
     lgr.debug("using '%s' for building" % builder)
 
@@ -145,11 +155,6 @@ def _proc_env(family, codename, args):
         if not os.path.exists(result_dir):
             os.makedirs(result_dir)
 
-    debbuild_options = get_build_option('debbuild options', args.debbuild_options, family)
-    if not debbuild_options is None:
-        cmd_opts += ['--debbuildopts', debbuild_options]
-        lgr.debug("using additional debbuild options '%s'" % debbuild_options)
-
     # backport
     if args.backport:
         backported_dsc = _backport_dsc(args.dsc, codename, family, args)
@@ -167,10 +172,33 @@ def _proc_env(family, codename, args):
         raise ValueError("no architectures specified, use --arch or add to configuration file")
 
     had_failures = False
+    first_arch = True
     for arch in archs:
+        # source include?
+        debbuild_options = get_build_option('debbuild options', args.debbuild_options, family)
+        # what kind of build are we aiming for
+        if first_arch:
+            # first round
+            if source_include == True:
+                # we source include in first round
+                buildtype_opt = ' -sa'
+            elif source_include == False:
+                buildtype_opt = ' -B'
+            else:
+                # leave default
+                buildtype_opt = ''
+        else:
+            # except for the first one all others are binary only
+            buildtype_opt += ' -B'
+        if not debbuild_options is None:
+            debbuild_options += buildtype_opt
+        else:
+            debbuild_options = buildtype_opt
+        cmd_opts += ['--debbuildopts', debbuild_options]
+        lgr.debug("using additional debbuild options '%s'" % debbuild_options)
+
         lgr.debug("started building for architecture '%s'" % arch)
-        chroot_target = opj(chroot_basedir,
-                            '%s-%s-%s' % (family, codename, arch))
+        chroot_target = _get_chroot_base(family, codename, arch, args)
         if builder == 'pbuilder':
             cmd_opts += ['--basetgz', '%s.tar.gz' % chroot_target]
         elif builder == 'cowbuilder':
@@ -205,6 +233,7 @@ def _proc_env(family, codename, args):
                 summaryline += 'OK\n'
                 summary_file.write(summaryline)
         lgr.debug("finished building for architecture '%s'" % arch)
+        first_arch = False
     return had_failures
 
 def run(args):
@@ -212,10 +241,21 @@ def run(args):
         args.env = [env.split('-') for env in cfg.get('build', 'environments', default='').split()]
     lgr.debug("attempting to build in %i environments: %s" % (len(args.env), args.env))
     had_failure = False
+    source_include = args.source_include
     for family, codename in args.env:
         lgr.debug("started building in environment '%s-%s'" % (family, codename))
-        if _proc_env(family, codename, args):
+        if args.backport:
+            # start with default for each backport run, i.e. source package version
+            source_include = args.source_include
+        if source_include is None:
+            # any configure source include strategy?
+            source_include = cfg.get('build', 'source include', default=False)
+        if _proc_env(family, codename, args, source_include):
             had_failures = True
+        # don't include more than once per source package version - will cause
+        # problem as parts of the source packages get regenerated and original
+        # checksums no longer match
+        source_include = False
         lgr.debug("finished building in environment '%s-%s'" % (family, codename))
     if had_failures:
         raise RuntimeError("some builds failed")
