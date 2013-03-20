@@ -117,7 +117,7 @@ def run(args):
             argv.append(av)
         i += 1
     # make dsc arg explicit
-    dsc_fname = argv[-1]
+    dsc_fname = os.path.abspath(argv[-1])
     argv = argv[:-1]
     dsc = deb822.Dsc(open(dsc_fname))
     settings = {
@@ -144,6 +144,13 @@ executable = %(executable)s
 
     source_include = args.source_include
     for family, codename in args.env:
+        # change into the 'result-dir' to have Condor transfer all output here
+        result_dir = get_build_option('result directory', args.result_dir, family)
+        if not result_dir is None:
+            lgr.debug("placing build results in '%s'" % result_dir)
+            if not os.path.exists(result_dir):
+                os.makedirs(result_dir)
+            os.chdir(result_dir)
         # do any backports locally
         if args.backport:
             lgr.info("backporting to %s-%s" % (family, codename))
