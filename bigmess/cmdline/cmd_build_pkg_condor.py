@@ -14,6 +14,7 @@ submitted individually to a Condor pool.
 
 Currently the implmentation is as follows:
 
+    THIS IS ALL WRONG
 1. The source package is sent/copied to the respective execute node.
 2. ``build_pkg`` is called locally on the execute machine and does any
    backporting and the actual building locally. This means that the
@@ -67,6 +68,9 @@ def setup_parser(parser):
             standard priority.""")
     parser.add_argument('--condor-logdir', metavar='PATH',
             help="""path to store Condor logfiles on the submit machine""")
+    parser.add_argument('--condor-dryrun', action='store_true',
+            help="""instead of actually submitting build jobs only display the
+            Condor submit file""")
 
 def run(args):
     if args.env is None:
@@ -78,7 +82,10 @@ def run(args):
     i = 0
     while i < len(sys.argv):
         av = sys.argv[i]
-        if av == '--env':
+        if av in ('-c', '--cfg', '--config'):
+            # config needs to be sent with the job
+            i += 1
+        elif av == '--env':
             # ignore, there will be individual build_pkg call per environment
             i += 2
         elif av == '--arch':
@@ -94,7 +101,7 @@ def run(args):
         elif av.startswith('--condor-'):
             # handled in this call
             i += 1
-        elif av.startswith('--build-basedir'):
+        elif av.startswith('--build-basedir') or av.startswith('--result-dir'):
             # to be ignored for a condor submission
             i += 1
         elif av == '--backport':
@@ -122,6 +129,7 @@ def run(args):
     }
     submit = """
 universe = vanilla
+requirements = HasBigmess
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 getenv = True
@@ -154,6 +162,8 @@ executable = %(executable)s
         # what files to transfer
         transfer_files = [dist_dsc_fname] \
                 + [opj(dist_dsc_dir, f['name']) for f in dist_dsc['Files']]
+        if not args.common_config_file is None:
+            transfer_files += args.common_config_file
         # logfile destination?
         logdir = get_build_option('condor logdir', args.condor_logdir, family, default=os.curdir)
         if not os.path.exists(logdir):
@@ -176,6 +186,7 @@ executable = %(executable)s
                 'arguments': ' '.join(argv[1:]
                                       + ['--env', family, codename,
                                          '--build-basedir', 'buildbase',
+                                         '--result-dir', '.',
                                          '--arch', arch,
                                          '--chroot-basedir', '.',
                                          '--source-include', src_incl,
@@ -183,6 +194,11 @@ executable = %(executable)s
                                       + [os.path.basename(dist_dsc_fname)]),
                 'transfer_files': ','.join(transfer_files + [basetgz]),
             }
+            # do we need to send the config?
+            if not args.common_config_file is None:
+                arch_settings['arguments'] = '-c %s %s'\
+                        % (os.path.basename(args.common_config_file[0]),
+                           arch_settings['arguments'])
             arch_settings.update(settings)
             submit += """
 # %(arch)s
@@ -197,7 +213,10 @@ queue
         # stop including source for all families -- backport might reenable
         source_include = False
     # store submit file
-    condor_submit = subprocess.Popen(['condor_submit'], stdin=subprocess.PIPE)
-    condor_submit.communicate(input=submit)
-    if condor_submit.wait():
-        raise RuntimeError("could not submit build; SPEC follows\n---\n%s---\n)" % submit)
+    if args.condor_dryrun:
+        print '== submit spec ========\n%s\n== end submit spec ====' % submit
+    else:
+        condor_submit = subprocess.Popen(['condor_submit'], stdin=subprocess.PIPE)
+        condor_submit.communicate(input=submit)
+        if condor_submit.wait():
+            raise RuntimeError("could not submit build; SPEC follows\n---\n%s---\n)" % submit)
