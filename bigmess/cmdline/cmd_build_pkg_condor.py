@@ -60,6 +60,10 @@ def setup_parser(parser):
     parser.add_argument('--condor-request-memory', type=int, default=1000,
             help="""Memory resource limit for build jobs -- in megabyte.
             Default: 1000M""")
+    parser.add_argument('--condor-request-cpus', type=int, default=1,
+            help="""Request a specific number of CPUs for the build job from
+            Condor. This information is also passed on to dpkg-buildpackage
+            (via its -j option). Default: 1""")
     parser.add_argument('--condor-nice-user', choices=('yes', 'no'),
             default='yes',
             help="""By default build jobs are submitted with the ``nice_user``
@@ -107,9 +111,9 @@ def run(args):
         elif av == '--backport':
             # backporting is done in this call, prior to build_pkg
             pass
-        elif av == '--source-include':
-            # this is handle in this call
-            pass
+        elif av in ('--source-include', '--debbuild-options'):
+            # this is handled in this call
+            i += 1
         elif av == 'build_pkg_condor':
             argv.append('build_pkg')
         else:
@@ -123,6 +127,7 @@ def run(args):
     settings = {
         'niceuser': args.condor_nice_user,
         'request_memory': args.condor_request_memory,
+        'request_cpus': args.condor_request_cpus,
         'src_name': dsc['Source'],
         'src_version': dsc['Version'],
         'executable': argv[0]
@@ -136,12 +141,18 @@ getenv = True
 notification = Never
 transfer_executable = FALSE
 request_memory = %(request_memory)i
+request_cpus = %(request_cpus)i
 nice_user = %(niceuser)s
 executable = %(executable)s
 
 
 """ % settings
-
+    # mangle debbuild options
+    if args.debbuild_options is None:
+        debbuild_options = '-j%i' % args.condor_request_cpus
+    else:
+        debbuild_options = '%s -j%i' % (args.debbuild_options,
+                                        args.condor_request_cpus)
     source_include = args.source_include
     for family, codename in args.env:
         # change into the 'result-dir' to have Condor transfer all output here
@@ -190,22 +201,23 @@ executable = %(executable)s
             arch_settings = {
                 'condorlog': os.path.abspath(logdir),
                 'arch': arch,
-                'arguments': ' '.join(argv[1:]
+                'arguments': '"%s"' % ' '.join(argv[1:]
                                       + ['--env', family, codename,
                                          '--build-basedir', 'buildbase',
                                          '--result-dir', '.',
                                          '--arch', arch,
                                          '--chroot-basedir', '.',
                                          '--source-include', src_incl,
+                                         "--debbuild-options ' %s'" % debbuild_options,
                                          '--']
                                       + [os.path.basename(dist_dsc_fname)]),
                 'transfer_files': ','.join(transfer_files + [basetgz]),
             }
             # do we need to send the config?
             if not args.common_config_file is None:
-                arch_settings['arguments'] = '-c %s %s'\
+                arch_settings['arguments'] = '"-c %s %s'\
                         % (os.path.basename(args.common_config_file[0]),
-                           arch_settings['arguments'])
+                           arch_settings['arguments'][1:])
             arch_settings.update(settings)
             submit += """
 # %(arch)s

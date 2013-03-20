@@ -49,12 +49,14 @@ def setup_parser(parser):
             help="""environment architecture to be used for building arch 'all'
             packages. Default: 'amd64'""")
     parser.add_argument('--source-include', type=arg2bool,
-            help="""if true, equivalent to option -sa for dpkg-build-package,
+            help="""if true, equivalent to option -sa for dpkg-buildpackage,
             but is only in effect once for each source package in a batch build
             """)
     parser.add_argument('--debbuild-options',
             help="""options to be pass onto dpkg-buildpackage, don't use this
-            for: -sa, -B and friends. Look at --source-include instead.""")
+            for: -sa, -B and friends. Look at --source-include instead. To
+            prevent problems while parsing the command line, put the argument
+            in quotes and add a space to the front, e.g. ' -d'.""")
     parser.add_argument('--backport', action='store_true',
             help="""if enabled source packages will be automatically backported
             via backport-dsc, which is using the code name of a corresponding
@@ -221,17 +223,15 @@ def _proc_env(family, codename, args, source_include):
                                   stdout=logfile) 
             summaryline = '%s %s ' % (family, codename)
             summaryline += '%(arch)s %(Source)s %(Version)s %(buildtime)s ' % dsc
-            with open(opj(result_dir, 'build_summary.log'), 'a+') \
-                    as summary_file:
-                if ret:
-                    summaryline += 'FAILED\n'
-                    summary_file.write(summaryline)
-                    had_failures = True
-                    lgr.warning("building failed (cmd: '%s'; exit code: %s)"
-                                       % ('%s %s' % (builder, ' '.join(cmd_opts)),
-                                          ret))
-                summaryline += 'OK\n'
-                summary_file.write(summaryline)
+            if ret:
+                summaryline += 'FAILED\n'
+                logfile.write(summaryline)
+                had_failures = True
+                lgr.warning("building failed (cmd: '%s'; exit code: %s)"
+                                   % ('%s %s' % (builder, ' '.join(cmd_opts)),
+                                      ret))
+            summaryline += 'OK\n'
+            logfile.write(summaryline)
         lgr.debug("finished building for architecture '%s'" % arch)
         first_arch = False
     return had_failures
