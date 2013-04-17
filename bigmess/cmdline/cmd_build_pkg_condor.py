@@ -142,6 +142,7 @@ notification = Never
 transfer_executable = FALSE
 request_memory = %(request_memory)i
 request_cpus = %(request_cpus)i
+want_graceful_removal = TRUE
 nice_user = %(niceuser)s
 executable = %(executable)s
 

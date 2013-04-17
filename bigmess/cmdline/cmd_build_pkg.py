@@ -185,7 +185,7 @@ def _proc_env(family, codename, args, source_include):
                 # we source include in first round
                 buildtype_opt = ' -sa'
             elif source_include == False:
-                buildtype_opt = ' -B'
+                buildtype_opt = ' -b'
             else:
                 # leave default
                 buildtype_opt = ''
@@ -225,12 +225,11 @@ def _proc_env(family, codename, args, source_include):
             summaryline += '%(arch)s %(Source)s %(Version)s %(buildtime)s ' % dsc
             if ret:
                 summaryline += 'FAILED\n'
-                logfile.write(summaryline)
                 had_failures = True
                 lgr.warning("building failed (cmd: '%s'; exit code: %s)"
-                                   % ('%s %s' % (builder, ' '.join(cmd_opts)),
-                                      ret))
-            summaryline += 'OK\n'
+                                   % (sp_args, ret))
+            else:
+                summaryline += 'OK\n'
             logfile.write(summaryline)
         lgr.debug("finished building for architecture '%s'" % arch)
         first_arch = False
@@ -240,7 +239,7 @@ def run(args):
     if args.env is None:
         args.env = [env.split('-') for env in cfg.get('build', 'environments', default='').split()]
     lgr.debug("attempting to build in %i environments: %s" % (len(args.env), args.env))
-    had_failure = False
+    had_failures = False
     source_include = args.source_include
     for family, codename in args.env:
         lgr.debug("started building in environment '%s-%s'" % (family, codename))
