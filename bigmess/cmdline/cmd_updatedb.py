@@ -168,7 +168,8 @@ def run(args):
         for st in deb822.Packages.iter_paragraphs(open(srcf_path)):
             if st.has_key('Task'):
                 taskdb[task] = st['Task']
-            if st.has_key('Depends'):
+                continue
+            elif st.has_key('Depends'):
                 pkg = st['Depends']
             elif st.has_key('Recommends'):
                 pkg = st['Recommends']
