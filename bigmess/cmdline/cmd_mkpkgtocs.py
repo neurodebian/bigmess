@@ -52,10 +52,11 @@ def run(args):
     db = load_db(args.pkgdb)
     bindb = db['bin']
     srcdb = db['src']
+    taskdb = db['task']
     by_suite = {}
     by_maintainer = {}
     maintainer_name = {}
-    by_field = {}
+    by_task = {}
     for pname, pkg in db['bin'].iteritems():
         for suite in pkg['in_suite']:
             by_suite[suite] = by_suite.get(suite, list()) + [pname]
@@ -63,9 +64,9 @@ def run(args):
         if 'upstream' in srcdb[src_name] and 'Tags' in srcdb[src_name]['upstream']:
             # we have some tags
             for tag in srcdb[src_name]['upstream']['Tags']:
-                if tag.startswith('field::'):
-                    field = tag[7:]
-                    by_field[field] = by_field.get(field, list()) + [pname]
+                if tag.startswith('task::'):
+                    task = tag[6:]
+                    by_task[task] = by_task.get(task, list()) + [pname]
         maintainer = srcdb[pkg['src_name']]['maintainer']
         uploaders = [u.strip() for u in srcdb[src_name]['uploaders'].split(',')]
         for maint in uploaders + [maintainer]:
@@ -96,14 +97,14 @@ def run(args):
                                       pkgs=suite_content,
                                       db=bindb) 
         _write_page(page, args.dest_dir, label)
-    field_tocs = toctoc['field']
-    for field_name, field_content in by_field.iteritems():
-        label = 'toc_pkgs_for_field_%s' % field_name
-        title = 'Packages for %s' % field_name
-        field_tocs[label] = title
+    task_tocs = toctoc['field']
+    for task_name, task_content in by_task.iteritems():
+        label = 'toc_pkgs_for_field_%s' % task_name
+        title = 'Packages for %s' % taskdb[task_name]
+        task_tocs[label] = title
         page = bintoc_template.render(label=label,
                                       title=title,
-                                      pkgs=field_content,
+                                      pkgs=set(task_content),
                                       db=bindb)
         _write_page(page, args.dest_dir, label)
     # full TOC
