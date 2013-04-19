@@ -58,11 +58,12 @@ def run(args):
                              default='').split()
     rurls = cfg.get('release files', 'urls', default='').split()
     if args.init_db is None:
-        db = {'src': {}, 'bin': {}}
+        db = {'src': {}, 'bin': {}, 'task': {}}
     else:
         db = load_db(args.init_db)
     srcdb = db['src']
     bindb = db['bin']
+    taskdb = db['task']
     releases = cfg.options('release files')
     for release in releases:
         rurl = cfg.get('release files', release)
@@ -161,5 +162,62 @@ def run(args):
 
                         bindb[bin_name]['short_description'] = descr[0].strip()
                         bindb[bin_name]['long_description'] = descr[1:]
+    tasks = cfg.options('task files')
+    for task in tasks:
+        srcf_path = opj(args.filecache, 'task_%s' % task)
+        for st in deb822.Packages.iter_paragraphs(open(srcf_path)):
+            if st.has_key('Task'):
+                taskdb[task] = st['Task']
+            if st.has_key('Depends'):
+                pkg = st['Depends']
+            elif st.has_key('Recommends'):
+                pkg = st['Recommends']
+            elif st.has_key('Suggests'):
+                pkg = st['Suggests']
+            else:
+                lgr.warning("Ignoring unkown stanza in taskfile: %s" % st)
+                continue
+
+            # take care of pkg lists
+            for p in pkg.split(', '):
+                if not p in bindb:
+                    lgr.warning("Ignoring package '%s' (listed in task '%s', but not in repository"
+                                % (p, task))
+                    continue
+                pgdb = srcdb[bindb[p]['src_name']]
+                if not 'upstream' in pgdb:
+                    pgdb['upstream'] = {}
+                udb = pgdb['upstream']
+                taglist = udb.setdefault('Tags', [])
+                taglist.append('task::%s' % task)
+                udb['Tags'] = taglist
+                # Publications
+                if st.has_key('Published-Title') and not 'Reference' in udb:
+                    title = st['Published-Title']
+                    if title[-1] == '.':
+                        # trip trailing dot -- added later
+                        pub = {'Title': title[:-1]}
+                    else:
+                        pub = {'Title': title}
+                    if st.has_key('Published-Authors'):
+                        pub['Author'] = st['Published-Authors']
+                    if st.has_key('Published-Year'):
+                        pub['Year'] = st['Published-Year']
+                    if st.has_key('Published-In'):
+                        pub['Journal'] = st['Published-In']
+                    if st.has_key('Published-URL'):
+                        pub['URL'] = st['Published-URL']
+                    if st.has_key('Published-DOI'):
+                        pub['DOI'] = st['Published-DOI']
+                        # need at least one URL
+                        if not pub.has_key('url'):
+                            pub['URL'] = "http://dx.doi.org/%s" % st['Published-DOI']
+                    udb['Reference'] = [pub]
+                # Registration
+                if st.has_key('Registration') and not 'Registration' in udb:
+                    udb['Registration'] = st['Registration']
+                # Remarks
+                if st.has_key('Remark') and not 'Remark' in udb:
+                    udb['Remark'] = st['Remark']
     # store the full DB
     save_db(db, args.pkgdb)
