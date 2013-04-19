@@ -201,6 +201,7 @@ def run(args):
         pkgs = args.pkgs
 
     for pkg in pkgs:
+        lgr.debug("render page for '%s'" % pkg)
         page = _gen_pkg_page(pkg, db, template)
         of = codecs.open(opj(args.dest_dir, '%s.rst' % pkg), 'wb', 'utf-8')
         of.write(page)
