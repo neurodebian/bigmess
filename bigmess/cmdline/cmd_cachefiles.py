@@ -124,3 +124,9 @@ def run(args):
                     _download_file(mfurl, dst_path, args.force_update,
                                    ignore_missing=True)
                     lookupcache[dst_path] = None
+    tasks = cfg.options('task files')
+    for task in tasks:
+        rurl = cfg.get('task files', task)
+        dst_path = opj(args.filecache, 'task_%s' % task)
+        if not _download_file(rurl, dst_path, args.force_update):
+            continue
