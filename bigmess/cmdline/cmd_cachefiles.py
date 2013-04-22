@@ -65,6 +65,31 @@ def _download_file(url, dst, force_update=False, ignore_missing=False):
 def _url2filename(cache, url):
     return opj(cache, url.replace('/', '_').replace(':', '_'))
 
+def _find_release_origin_archive(cfg, release):
+    # available
+    origins = []
+    for origin in cfg.options('release bases'):
+        archive = cfg.get('release bases', origin)
+        if not archive:
+            continue
+        url = '%s/dists/%s/Release' % (archive, release)
+        try:
+            urip = urllib2.urlopen(url)
+            info = urip.info()
+            origins.append(archive)
+        except urllib2.HTTPError:
+            lgr.debug("No '%s'" % url)
+        except urllib2.URLError:
+            lgr.debug("Can't connect to'%s'" % url)
+    if len(origins) == 0:
+        lgr.info("Found no origin for %r. Assuming it originates here."
+                 % release)
+        return None
+    elif len(origins) > 1:
+        lgr.warning("More than a single origin archive was found for %r: %s. "
+                    "!Disambiguate (TODO)!" % (release, origins))
+        return None
+    return origins[0]
 
 def run(args):
     lgr.debug("using file cache at '%s'" % args.filecache)
@@ -136,12 +161,12 @@ def run(args):
         if not rname:
             continue
 
-        rorigin = rname.split()[0].lower()   # debian or ubuntu
-        omirror = cfg.get('release bases', rorigin)
-        if not omirror:
+        # Look-up release bases for the release among available bases
+        oarchive = _find_release_origin_archive(cfg, release)
+        if not oarchive:
             continue
 
-        obaseurl = '%s/%s' % (omirror, '/'.join(rurl.split('/')[-3:-1]))
+        obaseurl = '%s/%s' % (oarchive, '/'.join(rurl.split('/')[-3:-1]))
         orurl = '%s/Release' % obaseurl
         # first get 'Release' files
         dst_path = _url2filename(args.filecache, orurl)
