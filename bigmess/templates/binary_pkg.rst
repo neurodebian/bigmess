@@ -109,18 +109,21 @@ Reference:
   .. list-table:: Package availability chart
      :header-rows: 1
      :stub-columns: 1
+     :widths: 40 20 20 20
 
      * - Distribution
-       - Version
+       - Base version
+       - Our version
        - Architectures
   {%- for release in availability|dictsort %}
-  {%- for version in release[1]|dictsort %}
+  {%- for version in release[1] %}
   {%- if loop.first %}
      * - {{ release[0] }}
   {%- else %}
      * -
   {%- endif %}
        - {{ version[0] }}
-       - {{ ', '.join(version[1]) }}
+       - {{ version[1] }}
+       - {{ ', '.join(version[2]) }}
   {%- endfor %}
   {%- endfor %}

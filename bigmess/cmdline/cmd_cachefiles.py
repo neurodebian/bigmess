@@ -73,6 +73,10 @@ def run(args):
                            default=None)
     meta_filenames = cfg.get('metadata', 'source extracts filenames',
                              default='').split()
+
+    #
+    # Releases archives
+    #
     releases = cfg.options('release files')
     # for preventing unnecessary queries
     lookupcache = {}
@@ -87,6 +91,7 @@ def run(args):
             continue
         baseurl = '/'.join(rurl.split('/')[:-1])
         comps, archs = _proc_release_file(dst_path, baseurl)
+        # Fetch information on binary packages
         for comp in comps:
             for arch in archs:
                 # also get 'Packages.gz' for each component and architecture
@@ -124,6 +129,37 @@ def run(args):
                     _download_file(mfurl, dst_path, args.force_update,
                                    ignore_missing=True)
                     lookupcache[dst_path] = None
+
+        # Also fetch corresponding Release from the base distribution
+        # Figure out the base distribution based on the release description
+        rname = cfg.get('release names', release)
+        if not rname:
+            continue
+
+        rorigin = rname.split()[0].lower()   # debian or ubuntu
+        omirror = cfg.get('release bases', rorigin)
+        if not omirror:
+            continue
+
+        obaseurl = '%s/%s' % (omirror, '/'.join(rurl.split('/')[-3:-1]))
+        orurl = '%s/Release' % obaseurl
+        # first get 'Release' files
+        dst_path = _url2filename(args.filecache, orurl)
+        if not _download_file(orurl, dst_path, args.force_update):
+            continue
+
+        comps, _ = _proc_release_file(dst_path, obaseurl)
+        for comp in comps:
+            # Fetch information on source packages -- we are not interested
+            # to provide a thorough coverage -- just the version
+            osurl = '/'.join((obaseurl, comp, 'source', 'Sources.gz'))
+            dst_path = _url2filename(args.filecache, osurl)
+            if not _download_file(osurl, dst_path, args.force_update):
+                continue
+
+    #
+    # Tasks
+    #
     tasks = cfg.options('task files')
     for task in tasks:
         rurl = cfg.get('task files', task)
