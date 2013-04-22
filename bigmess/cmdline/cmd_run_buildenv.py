@@ -48,7 +48,7 @@ def setup_parser(parser):
     parser.add_argument('--env', nargs=2, required=True,
             help="""build environment to run. This first argument must be a known
             environment family name, while the second argument is a codename for
-            a particular suite, for example: 'debian' 'wheezy'""")
+            a particular release, for example: 'debian' 'wheezy'""")
     parser.add_argument('--arch', required=True, default='amd64',
             help="""architecture of the build environment to run (default:
             'amd64')""")

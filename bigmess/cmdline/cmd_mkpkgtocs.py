@@ -53,13 +53,13 @@ def run(args):
     bindb = db['bin']
     srcdb = db['src']
     taskdb = db['task']
-    by_suite = {}
+    by_release = {}
     by_maintainer = {}
     maintainer_name = {}
     by_task = {}
     for pname, pkg in db['bin'].iteritems():
-        for suite in pkg['in_suite']:
-            by_suite[suite] = by_suite.get(suite, list()) + [pname]
+        for release in pkg['in_release']:
+            by_release[release] = by_release.get(release, list()) + [pname]
         src_name = pkg['src_name']
         if 'upstream' in srcdb[src_name] and 'Tags' in srcdb[src_name]['upstream']:
             # we have some tags
@@ -83,19 +83,19 @@ def run(args):
             by_maintainer[memail] = by_maintainer.get(memail, set()).union((src_name,))
         # XXX extend when blend is ready
 
-    # write TOCs for all suites
+    # write TOCs for all releases
     jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
     bintoc_template = jinja_env.get_template('binpkg_toc.rst')
-    toctoc = {'suite': {}, 'maintainer': {}, 'field': {}}
-    suite_tocs = toctoc['suite']
-    for suite_name, suite_content in by_suite.iteritems():
-        label = 'toc_pkgs_for_suite_%s' % suite_name
-        title = 'Packages for %s' % cfg.get('release names', suite_name)
-        suite_tocs[label] = title
+    toctoc = {'release': {}, 'maintainer': {}, 'field': {}}
+    release_tocs = toctoc['release']
+    for release_name, release_content in by_release.iteritems():
+        label = 'toc_pkgs_for_release_%s' % release_name
+        title = 'Packages for %s' % cfg.get('release names', release_name)
+        release_tocs[label] = title
         page = bintoc_template.render(label=label,
                                       title=title,
-                                      pkgs=suite_content,
-                                      db=bindb) 
+                                      pkgs=release_content,
+                                      db=bindb)
         _write_page(page, args.dest_dir, label)
     task_tocs = toctoc['field']
     for task_name, task_content in by_task.iteritems():

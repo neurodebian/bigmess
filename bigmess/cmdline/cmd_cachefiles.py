@@ -65,6 +65,31 @@ def _download_file(url, dst, force_update=False, ignore_missing=False):
 def _url2filename(cache, url):
     return opj(cache, url.replace('/', '_').replace(':', '_'))
 
+def _find_release_origin_archive(cfg, release):
+    # available
+    origins = []
+    for origin in cfg.options('release bases'):
+        archive = cfg.get('release bases', origin)
+        if not archive:
+            continue
+        url = '%s/dists/%s/Release' % (archive, release)
+        try:
+            urip = urllib2.urlopen(url)
+            info = urip.info()
+            origins.append(archive)
+        except urllib2.HTTPError:
+            lgr.debug("No '%s'" % url)
+        except urllib2.URLError:
+            lgr.debug("Can't connect to'%s'" % url)
+    if len(origins) == 0:
+        lgr.info("Found no origin for %r. Assuming it originates here."
+                 % release)
+        return None
+    elif len(origins) > 1:
+        lgr.warning("More than a single origin archive was found for %r: %s. "
+                    "!Disambiguate (TODO)!" % (release, origins))
+        return None
+    return origins[0]
 
 def run(args):
     lgr.debug("using file cache at '%s'" % args.filecache)
@@ -73,6 +98,10 @@ def run(args):
                            default=None)
     meta_filenames = cfg.get('metadata', 'source extracts filenames',
                              default='').split()
+
+    #
+    # Releases archives
+    #
     releases = cfg.options('release files')
     # for preventing unnecessary queries
     lookupcache = {}
@@ -87,6 +116,7 @@ def run(args):
             continue
         baseurl = '/'.join(rurl.split('/')[:-1])
         comps, archs = _proc_release_file(dst_path, baseurl)
+        # Fetch information on binary packages
         for comp in comps:
             for arch in archs:
                 # also get 'Packages.gz' for each component and architecture
@@ -124,6 +154,37 @@ def run(args):
                     _download_file(mfurl, dst_path, args.force_update,
                                    ignore_missing=True)
                     lookupcache[dst_path] = None
+
+        # Also fetch corresponding Release from the base distribution
+        # Figure out the base distribution based on the release description
+        rname = cfg.get('release names', release)
+        if not rname:
+            continue
+
+        # Look-up release bases for the release among available bases
+        oarchive = _find_release_origin_archive(cfg, release)
+        if not oarchive:
+            continue
+
+        obaseurl = '%s/%s' % (oarchive, '/'.join(rurl.split('/')[-3:-1]))
+        orurl = '%s/Release' % obaseurl
+        # first get 'Release' files
+        dst_path = _url2filename(args.filecache, orurl)
+        if not _download_file(orurl, dst_path, args.force_update):
+            continue
+
+        comps, _ = _proc_release_file(dst_path, obaseurl)
+        for comp in comps:
+            # Fetch information on source packages -- we are not interested
+            # to provide a thorough coverage -- just the version
+            osurl = '/'.join((obaseurl, comp, 'source', 'Sources.gz'))
+            dst_path = _url2filename(args.filecache, osurl)
+            if not _download_file(osurl, dst_path, args.force_update):
+                continue
+
+    #
+    # Tasks
+    #
     tasks = cfg.options('task files')
     for task in tasks:
         rurl = cfg.get('task files', task)
