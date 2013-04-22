@@ -110,9 +110,10 @@ def run(args):
                                   % src_name)
                         try:
                             upstream = yaml.safe_load(open(mfpath))
-                        except yaml.scanner.ScannerError:
+                        except yaml.scanner.ScannerError, e:
                             lgr.warning("Malformed upstream YAML data for '%s'"
                                         % src_name)
+                            lgr.debug("Caught exception was: %s" % (e,))
                         # uniformize structure
                         if 'Reference' in upstream and not isinstance(upstream['Reference'], list):
                             upstream['Reference'] = [upstream['Reference']]
