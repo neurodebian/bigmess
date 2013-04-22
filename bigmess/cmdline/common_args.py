@@ -56,7 +56,7 @@ environments = (
     dict(nargs=2, action='append',
          help="""build environments to limit processing to. This first
          argument must be a known environment family name, while the second
-         argument is a codename for a particular suite, for example:
+         argument is a codename for a particular release/suite, for example:
          'debian' 'wheezy'. If this option is not given, all known/configured
          environments are going to be processed""")
 )
