@@ -38,14 +38,14 @@ def run(args):
             # no seperate list for the data archive
             continue
         for mirror in cfg.options('mirrors'):
-            for suites, tag in (('main contrib non-free', 'full'),
+            for areas, tag in (('main contrib non-free', 'full'),
                                 ('main', 'libre')):
                 listname = '%s.%s.%s' % (release, mirror, tag)
                 lf = open(opj(args.dest_dir, listname), 'w')
                 for rel in ('data', release):
                     aptcfg = '%s %s %s\n' % (cfg.get('mirrors', mirror),
                                              rel,
-                                             suites)
+                                             areas)
                 lf.write('deb %s' % aptcfg)
                 lf.write('#deb-src %s' % aptcfg)
                 lf.close()

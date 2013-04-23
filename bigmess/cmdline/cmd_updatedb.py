@@ -42,7 +42,7 @@ def setup_parser(parser):
 
 def _proc_release_file(release_filename, baseurl):
     rp = deb822.Release(codecs.open(release_filename, 'r', 'utf-8'))
-    return rp['Suite'], rp['Components'].split(), rp['Architectures'].split()
+    return rp['Codename'], rp['Components'].split(), rp['Architectures'].split()
 
 
 def _url2filename(cache, url):
@@ -70,7 +70,7 @@ def run(args):
         # first 'Release' files
         relf_path = _url2filename(args.filecache, rurl)
         baseurl = '/'.join(rurl.split('/')[:-1])
-        suite, comps, archs = _proc_release_file(relf_path, baseurl)
+        codename, comps, archs = _proc_release_file(relf_path, baseurl)
         for comp in comps:
             # also get 'Sources.gz' for each component
             surl = '/'.join((baseurl, comp, 'source', 'Sources.gz'))
@@ -91,11 +91,11 @@ def run(args):
                 sdb['binary'] = bins
                 for b in bins:
                     if not b in bindb:
-                        bindb[b] = {'in_suite': {suite: {src_version: []}},
+                        bindb[b] = {'in_release': {codename: {src_version: []}},
                                     'src_name': src_name,
                                     'latest_version': src_version}
                     else:
-                        bindb[b]['in_suite'][suite] = {src_version: []}
+                        bindb[b]['in_release'][codename] = {src_version: []}
                         if apt_pkg.version_compare(
                                 src_version,  bindb[b].get('latest_version', '')) > 0:
                             bindb[b]['src_name'] = src_name
@@ -142,17 +142,17 @@ def run(args):
                     if not bin_name in bindb:
                         lgr.warning("No corresponding source package for "
                                     "binary package '%s' in [%s, %s, %s]"
-                                    % (bin_name, suite, comp, arch))
+                                    % (bin_name, codename, comp, arch))
                         continue
                     try:
-                        bindb[bin_name]['in_suite'][suite][bin_version].append(arch)
+                        bindb[bin_name]['in_release'][codename][bin_version].append(arch)
                     except KeyError:
-                        if not suite in bindb[bin_name]['in_suite']:
-                            # package not listed in this suite?
-                            bindb[bin_name]['in_suite'][suite] = {bin_version: [arch]}
-                        elif not bin_version in bindb[bin_name]['in_suite'][suite]:
-                            # package version not listed in this suite?
-                            bindb[bin_name]['in_suite'][suite][bin_version] = [arch]
+                        if not codename in bindb[bin_name]['in_release']:
+                            # package not listed in this release?
+                            bindb[bin_name]['in_release'][codename] = {bin_version: [arch]}
+                        elif not bin_version in bindb[bin_name]['in_release'][codename]:
+                            # package version not listed in this release?
+                            bindb[bin_name]['in_release'][codename][bin_version] = [arch]
                         else:
                             raise
                     if apt_pkg.version_compare(
@@ -163,6 +163,42 @@ def run(args):
 
                         bindb[bin_name]['short_description'] = descr[0].strip()
                         bindb[bin_name]['long_description'] = descr[1:]
+
+    # Review availability of (source) packages in the base
+    # releases.  Since we might not have something already
+    # available in the base release, we do it in a separate loop,
+    # after we got information on all packages which we do have in
+    # some release in our repository
+    for release in releases:
+        rurl = cfg.get('release files', release)
+        rname = cfg.get('release names', release)
+        if not rname:
+            continue
+
+        rorigin = rname.split()[0].lower()   # debian or ubuntu
+        omirror = cfg.get('release bases', rorigin)
+        if not omirror:
+            continue
+
+        bbaseurl = '%s/%s' % (omirror, '/'.join(rurl.split('/')[-3:-1]))
+        brurl = '%s/Release' % bbaseurl
+
+        # first 'Release' files
+        brelf_path = _url2filename(args.filecache, brurl)
+        codename, comps, archs = _proc_release_file(brelf_path, bbaseurl)
+        for comp in comps:
+            # also get 'Sources.gz' for each component
+            surl = '/'.join((bbaseurl, comp, 'source', 'Sources.gz'))
+            srcf_path = _url2filename(args.filecache, surl)
+            for spkg in deb822.Sources.iter_paragraphs(gzip.open(srcf_path)):
+                sdb = srcdb.get(spkg['Package'], None)
+                if not sdb:
+                    continue
+                src_version = spkg['Version']
+                if not 'in_base_release' in sdb:
+                    sdb['in_base_release'] = {}
+                sdb['in_base_release'][codename] = src_version
+
     tasks = cfg.options('task files')
     for task in tasks:
         srcf_path = opj(args.filecache, 'task_%s' % task)

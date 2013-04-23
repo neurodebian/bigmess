@@ -16,7 +16,7 @@ A Jinja template is used to generate output in arbitrary formats. The template
 renderer is provided with three dictionary containing all relevant information:
 
 ``code2name``
-  Mapping of repository suite code names to human readable names (e.g. full
+  Mapping of repository release codenames to human readable names (e.g. full
   release names)
 
 ``mirror2name``
