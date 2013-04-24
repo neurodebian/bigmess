@@ -57,7 +57,7 @@ def run(args):
     mirror2name = {}
     mirror2url = {}
     code2relname = dict([(r, cfg.get('release names', r))
-                         for r in cfg.options('release names')
+                         for r in cfg.options('release files')
                          if not r == 'data'])
     if cfg.has_section('mirror names'):
         mirror2name = dict([(m, codecs.decode(cfg.get('mirror names', m), 'utf-8'))
