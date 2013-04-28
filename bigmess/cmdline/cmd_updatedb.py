@@ -219,8 +219,8 @@ def run(args):
             # take care of pkg lists
             for p in pkg.split(', '):
                 if not p in bindb:
-                    lgr.warning("Ignoring package '%s' (listed in task '%s', but not in repository"
-                                % (p, task))
+                    lgr.info("Ignoring package '%s' (listed in task '%s', but not in repository)"
+                             % (p, task))
                     continue
                 pgdb = srcdb[bindb[p]['src_name']]
                 if not 'upstream' in pgdb:
