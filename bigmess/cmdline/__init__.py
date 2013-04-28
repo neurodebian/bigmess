@@ -22,3 +22,4 @@ import cmd_mkpkgtocs
 import cmd_run_buildenv
 import cmd_updatedb
 import cmd_update_buildenv
+import cmd_mkmirrorsstat
