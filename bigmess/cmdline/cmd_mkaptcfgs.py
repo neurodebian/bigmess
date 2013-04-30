@@ -46,6 +46,6 @@ def run(args):
                     aptcfg = '%s %s %s\n' % (cfg.get('mirrors', mirror),
                                              rel,
                                              areas)
-                lf.write('deb %s' % aptcfg)
-                lf.write('#deb-src %s' % aptcfg)
+                    lf.write('deb %s' % aptcfg)
+                    lf.write('#deb-src %s' % aptcfg)
                 lf.close()
