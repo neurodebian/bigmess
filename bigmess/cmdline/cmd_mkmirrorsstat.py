@@ -90,7 +90,7 @@ def run(args):
             age = (time.time() - int(stamp))   # age in hours
             age_str = _literal_seconds(age)
             if age > warn_threshold:
-                lgr.warning("Mirror %(mirror)s is %(age_str)s old")
+                lgr.warning("Mirror %(mirror)s is %(age_str)s old", locals())
                 status = "**OLD**"
             else:
                 status = "OK"
