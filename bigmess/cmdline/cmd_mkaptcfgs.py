@@ -33,7 +33,7 @@ def setup_parser(parser):
 
 
 def run(args):
-    for release in cfg.options('release names'):
+    for release in cfg.options('release files'):
         if release == 'data':
             # no seperate list for the data archive
             continue
