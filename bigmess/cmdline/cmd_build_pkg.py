@@ -25,6 +25,7 @@ import argparse
 import sys
 import xdg
 import time
+from copy import deepcopy
 from debian import deb822
 import subprocess
 import os
@@ -148,21 +149,21 @@ def _proc_env(family, codename, args, source_include):
         aptcache = ''
         lgr.debug("no local apt cache in use")
 
-    cmd_opts = [
+    cmd_opts_prefix = [
         '--build',
         '--aptcache', aptcache,
     ]
 
     build_basedir = get_build_option('build basedir', args.build_basedir, family)
     if not build_basedir is None:
-        cmd_opts += ['--buildplace', build_basedir]
+        cmd_opts_prefix += ['--buildplace', build_basedir]
         if not os.path.exists(build_basedir):
             os.makedirs(build_basedir)
 
     result_dir = get_build_option('result directory', args.result_dir, family)
     if result_dir is None:
         result_dir = os.path.abspath(os.curdir)
-    cmd_opts += ['--buildresult', result_dir]
+    cmd_opts_prefix += ['--buildresult', result_dir]
     lgr.debug("placing build results in '%s'" % result_dir)
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
@@ -186,6 +187,8 @@ def _proc_env(family, codename, args, source_include):
     had_failures = False
     first_arch = True
     for arch in archs:
+        # start fresh (in-place mods below)
+        cmd_opts = deepcopy(cmd_opts_prefix)
         # source include?
         debbuild_options = get_build_option('debbuild options', args.debbuild_options, family)
         # what kind of build are we aiming for
