@@ -33,6 +33,7 @@ __docformat__ = 'restructuredtext'
 import argparse
 import sys
 import xdg
+from copy import deepcopy
 import subprocess
 import os
 from os.path import join as opj
@@ -66,7 +67,7 @@ def _proc_env(family, codename, args):
                              default='main').split()
     lgr.debug("enabling components %s" % components)
 
-    cmd_opts = [
+    cmd_opts_prefix = [
         '--create',
         '--distribution', codename,
         '--debootstrap', 'debootstrap', # make me an option
@@ -94,6 +95,7 @@ def _proc_env(family, codename, args):
         archs = cfg.get('build', '%s architectures' % family).split()
 
     for arch in archs:
+        cmd_opts = deepcopy(cmd_opts_prefix)
         lgr.debug("started bootstrapping architecture '%s'" % arch)
         chroot_targetdir = opj(args.chroot_basedir,
                                '%s-%s-%s' % (family, codename, arch))
