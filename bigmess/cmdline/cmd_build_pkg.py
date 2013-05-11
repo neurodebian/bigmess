@@ -75,11 +75,20 @@ def setup_parser(parser):
 
 
 def _backport_dsc(dsc, codename, family, args):
+    dsc_dict = deb822.Dsc(open(dsc))
     # assemble backport-dsc call
     bp_args = ['--target-distribution', codename]
     bp_mod_control = get_build_option('backport modify control',
                                       args.bp_mod_control,
                                       family)
+    modcontrol_blacklist = get_build_option('backport modify control blacklist',
+                                            family=family,
+                                            default='').split()
+    # if blacklisted for this source package: reset
+    if dsc_dict['Source'] in modcontrol_blacklist:
+        lgr.debug("source package '%s' is blacklisted for control file modification"
+                  % dsc_dict['Source'])
+        bp_mod_control = None
     if not bp_mod_control is None:
         bp_args += ['--mod-control', bp_mod_control]
     bp_maintainer = get_build_option('backport maintainer',
