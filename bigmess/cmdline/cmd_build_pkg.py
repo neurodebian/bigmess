@@ -90,7 +90,7 @@ def _backport_dsc(dsc, codename, family, args):
             '--maint-name', bp_maintainer.split('<')[0].strip(),
             '--maint-email', bp_maintainer.split('<')[1].strip()[:-1],
         ]
-    if cfg.has_option('codename backport ids', codename):
+    if cfg.has_option('release backport ids', codename):
         bp_args += ['--version-suffix',
                     cfg.get('codename backport ids', codename)]
     lgr.debug('attempting to backport source package')
