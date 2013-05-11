@@ -31,7 +31,8 @@ import subprocess
 import os
 from os.path import join as opj
 from bigmess import cfg
-from .helpers import parser_add_common_args, get_build_option, arg2bool
+from .helpers import parser_add_common_args, get_build_option, arg2bool, \
+        get_dir_cfg
 import logging
 lgr = logging.getLogger(__name__)
 
@@ -143,33 +144,24 @@ def _proc_env(family, codename, args, source_include):
     builder = get_build_option('builder', args.builder, family, default='pbuilder')
     lgr.debug("using '%s' for building" % builder)
 
-    aptcache = get_build_option('aptcache', args.aptcache, family)
-    if aptcache:
-        lgr.debug("using local apt cache at '%s'" % aptcache)
-    else:
-        aptcache = ''
-        lgr.debug("no local apt cache in use")
-    aptcache = os.path.expanduser(os.path.expandvars(aptcache))
+    aptcache = get_dir_cfg('aptcache', args.aptcache, family,
+                           ensure_exists=False)
 
     cmd_opts_prefix = [
         '--build',
         '--aptcache', aptcache,
     ]
 
-    build_basedir = get_build_option('build basedir', args.build_basedir, family)
+    build_basedir = get_dir_cfg('build basedir', args.build_basedir, family,
+                                ensure_exists=True)
     if not build_basedir is None:
-        build_basedir = os.path.expanduser(os.path.expandvars(build_basedir))
         cmd_opts_prefix += ['--buildplace', build_basedir]
-        if not os.path.exists(build_basedir):
-            os.makedirs(build_basedir)
 
-    result_dir = get_build_option('result directory', args.result_dir, family)
+    result_dir = get_dir_cfg('result directory', args.result_dir, family,
+                             ensure_exists=True)
     if result_dir is None:
         result_dir = os.path.abspath(os.curdir)
-    else:
-        result_dir = os.path.expanduser(os.path.expandvars(os.curdir))
     cmd_opts_prefix += ['--buildresult', result_dir]
-    lgr.debug("placing build results in '%s'" % result_dir)
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
 

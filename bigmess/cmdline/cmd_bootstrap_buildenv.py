@@ -38,7 +38,7 @@ import subprocess
 import os
 from os.path import join as opj
 from bigmess import cfg
-from .helpers import parser_add_common_args
+from .helpers import parser_add_common_args, get_dir_cfg, get_build_option
 import logging
 lgr = logging.getLogger(__name__)
 
@@ -53,18 +53,10 @@ def setup_parser(parser):
             environment. For example: main contrib non-free""")
 
 def _proc_env(family, codename, args):
-    aptcache = args.aptcache
-    if aptcache is None:
-        aptcache = cfg.get('build', '%s aptcache' % family,
-                           default='')
-    if aptcache:
-        lgr.debug("using local apt cache at '%s'" % aptcache)
-    else:
-        lgr.debug("no local apt cache in use")
-    components = args.components
-    if components is None:
-        components = cfg.get('build', '%s components' % family,
-                             default='main').split()
+    aptcache = get_dir_cfg('aptcache', args.aptcache, family,
+                           ensure_exists=False)
+    components = get_build_option('components', args.components, family,
+                                  default='main').split()
     lgr.debug("enabling components %s" % components)
 
     cmd_opts_prefix = [
@@ -75,59 +67,63 @@ def _proc_env(family, codename, args):
         '--components', ' '.join(components), 
     ]
 
-    if cfg.has_option('build', '%s bootstrap keyring' % family):
-        cmd_opts += ['--debootstrapopts',
-                     '--keyring=%s' % cfg.get('build', '%s bootstrap keyring' % family)]
-    if cfg.has_option('build', '%s keyring' % family):
-        cmd_opts += ['--keyring', cfg.get('build', '%s keyring' % family)]
-    if cfg.has_option('build', '%s mirror' % family):
-        cmd_opts += ['--mirror', cfg.get('build', '%s mirror' % family)]
-    if cfg.has_option('build', '%s othermirror' % family):
-        cmd_opts += ['--othermirror', cfg.get('build', '%s othermirror' % family) % codename]
+    bootstrap_keyring = get_dir_cfg('bootstrap keyring', None, family,
+                           ensure_exists=False)
+    if not bootstrap_keyring is None:
+        cmd_opts_prefix += ['--debootstrapopts', '--keyring=%s' % bootstrap_keyring]
+    keyring = get_dir_cfg('keyring', None, family, ensure_exists=False)
+    if not keyring is None:
+        cmd_opts_prefix += ['--keyring', keyring]
+    mirror = get_build_option('mirror', None, family)
+    if not mirror is None:
+        cmd_opts_prefix += ['--mirror', mirror]
+    othermirror = get_build_option('othermirror', None, family)
+    if not othermirror is None:
+        cmd_opts_prefix += ['--othermirror',
+                            othermirror % {'release': codename}]
+    chroot_basedir = get_dir_cfg('chroot basedir', args.chroot_basedir, family,
+                                 ensure_exists=False,
+                                 default=opj(xdg.BaseDirectory.xdg_data_home,
+                                             'bigmess', 'chroots'))
 
-    if not os.path.exists(args.chroot_basedir):
-        os.makedirs(args.chroot_basedir)
+    builder = get_build_option('builder', args.builder, family, default='pbuilder')
+    lgr.debug("using '%s' for building" % builder)
 
-    archs = args.arch
+    archs = get_build_option('architectures', args.arch, family, default=None)
     if archs is None:
-        if not cfg.has_option('build', '%s architectures' % family):
-            raise ValueError("no architectures specified, use --arch or add to configuration file")
-        archs = cfg.get('build', '%s architectures' % family).split()
+        raise ValueError("no architectures specified, use --arch or add to configuration file")
+    if not isinstance(archs, list):
+        archs = archs.split()
 
     for arch in archs:
         cmd_opts = deepcopy(cmd_opts_prefix)
         lgr.debug("started bootstrapping architecture '%s'" % arch)
-        chroot_targetdir = opj(args.chroot_basedir,
+        chroot_targetdir = opj(chroot_basedir,
                                '%s-%s-%s' % (family, codename, arch))
         if os.path.exists(chroot_targetdir):
             lgr.warning("'%s' exists -- ignoring architecture '%s'" % (chroot_targetdir, arch))
             continue
-        if args.builder == 'pbuilder':
+        if builder == 'pbuilder':
             cmd_opts += ['--basetgz', '%s.tar.gz' % chroot_targetdir]
-        elif args.builder == 'cowbuilder':
+        elif builder == 'cowbuilder':
             cmd_opts += ['--basepath', chroot_targetdir]
         else:
-            raise ValueError("unknown builder '%s'" % args.builder)
+            raise ValueError("unknown builder '%s'" % builder)
         cmd_opts += ['--debootstrapopts', '--arch=%s' % arch ]
-        ret = subprocess.call(['sudo', args.builder] + cmd_opts) 
+        ret = subprocess.call(['sudo', builder] + cmd_opts) 
         if ret:
             raise RuntimeError("bootstrapping failed (cmd: '%s'; exit code: %s)"
-                               % ('%s %s' % (args.builder, ' '.join(cmd_opts)),
+                               % ('%s %s' % (builder, ' '.join(cmd_opts)),
                                   ret))
         lgr.debug("finished bootstrapping architecture '%s'" % arch)
 
 def run(args):
     if args.env is None:
-        args.env = [env.split('-') for env in cfg.get('build', 'environments', default='').split()]
-    lgr.debug("attempting to bootstrap %i environments: %s" % (len(args.env), args.env))
-    if args.chroot_basedir is None:
-        args.chroot_basedir = cfg.get('build', 'chroot basedir',
-                                      default=opj(xdg.BaseDirectory.xdg_data_home,
-                                                  'bigmess', 'chroots'))
-        lgr.debug("using chroot base directory at '%s'" % args.chroot_basedir)
-    if args.builder is None:
-        args.builder = cfg.get('build', 'builder', default='pbuilder')
-        lgr.debug("using '%s' for bootstrapping" % args.builder)
+        args.env = [env.split('-') for env in cfg.get('build',
+                                                      'environments',
+                                                      default='').split()]
+    lgr.debug("attempting to bootstrap %i environments: %s"
+              % (len(args.env), args.env))
 
     for env in args.env:
         lgr.debug("started bootstrapping environment '%s'" % env)

@@ -13,6 +13,9 @@ __docformat__ = 'restructuredtext'
 import argparse
 import re
 import sys
+import os
+import logging
+lgr = logging.getLogger(__name__)
 
 
 class HelpAction(argparse.Action):
@@ -101,12 +104,47 @@ def get_build_option(optname, cli_input=None, family=None, default=None):
     from bigmess import cfg
     if not cli_input is None:
         # got something meaningful as a commandline arg -- got with it
+        lgr.debug("using cmdline input '%s' for build option '%s'"
+                  % (cli_input, optname))
         return cli_input
     if not family is None and cfg.has_option('build', '%s %s' % (family, optname)):
-        return cfg.get('build', '%s %s' % (family, optname))
+        val = cfg.get('build', '%s %s' % (family, optname))
+        lgr.debug("using %s-specific configuration '%s' for build option '%s'"
+                  % (family, val, optname))
+        return val
     if cfg.has_option('build', optname):
-        return cfg.get('build', optname)
+        val = cfg.get('build', optname)
+        lgr.debug("using generic configuration '%s' for build option '%s'"
+                  % (val, optname))
+        return val
+    lgr.debug("using default configuration '%s' for build option '%s'"
+               % (default, optname))
     return default
+
+def get_dir_cfg(option, cmdline_input, family, ensure_exists=False,
+                default=None):
+    """Specialized frontend for build options that specify directories
+    
+    Parameters
+    ----------
+    option : str
+      Base name of the build option
+    cmdline_input : any
+      Value given via cmdline option
+    family : str
+      Build family ID
+    ensure_exists : bool
+      If True, the directory is created of it doesn't exist.
+    """
+    dir_ = get_build_option(option, cmdline_input, family, default)
+    if dir_ is None:
+        return dir_
+    dir_ = os.path.expanduser(os.path.expandvars(dir_))
+    lgr.debug("directory for '%s' set to '%s'" % (option, dir_))
+    if ensure_exists and not os.path.exists(dir_):
+        lgr.debug("create directory for '%s'" % option)
+        os.makedirs(dir_)
+    return dir_
 
 def arg2bool(arg):
     arg = arg.lower()
