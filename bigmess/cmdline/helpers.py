@@ -124,7 +124,7 @@ def get_build_option(optname, cli_input=None, family=None, default=None):
 def get_dir_cfg(option, cmdline_input, family, ensure_exists=False,
                 default=None):
     """Specialized frontend for build options that specify directories
-    
+
     Parameters
     ----------
     option : str

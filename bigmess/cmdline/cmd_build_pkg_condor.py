@@ -47,7 +47,7 @@ import os
 import sys
 from os.path import join as opj
 from bigmess import cfg
-from .helpers import parser_add_common_args, get_build_option
+from .helpers import parser_add_common_args, get_build_option, get_dir_cfg
 from .cmd_build_pkg import _backport_dsc, _get_chroot_base
 import logging
 lgr = logging.getLogger(__name__)
@@ -157,11 +157,9 @@ executable = %(executable)s
     source_include = args.source_include
     for family, codename in args.env:
         # change into the 'result-dir' to have Condor transfer all output here
-        result_dir = get_build_option('result directory', args.result_dir, family)
+        result_dir = get_dir_cfg('result directory', args.result_dir, family,
+                                 ensure_exists=True)
         if not result_dir is None:
-            lgr.debug("placing build results in '%s'" % result_dir)
-            if not os.path.exists(result_dir):
-                os.makedirs(result_dir)
             os.chdir(result_dir)
         # do any backports locally
         if args.backport:
@@ -173,7 +171,8 @@ executable = %(executable)s
             dist_dsc_fname = dsc_fname
         if source_include is None:
             # any configure source include strategy?
-            source_include = cfg.get('build', '%s source include' % family, default=False)
+            source_include = get_build_option('source include', source_include,
+                                               family, default=False)
         dist_dsc = deb822.Dsc(open(dist_dsc_fname))
         dist_dsc_dir = os.path.dirname(dist_dsc_fname)
         # some verbosity for debugging
@@ -184,9 +183,8 @@ executable = %(executable)s
         if not args.common_config_file is None:
             transfer_files += args.common_config_file
         # logfile destination?
-        logdir = get_build_option('condor logdir', args.condor_logdir, family, default=os.curdir)
-        if not os.path.exists(logdir):
-            os.makedirs(logdir)
+        logdir = get_dir_cfg('condor logdir', args.condor_logdir, family,
+                             default=os.curdir, ensure_exists=True)
         archs = get_build_option('architectures', args.arch, family)
         # TODO limit to default arch for arch:all packages
         if isinstance(archs, basestring):
