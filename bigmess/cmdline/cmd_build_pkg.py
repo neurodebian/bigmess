@@ -127,6 +127,7 @@ def _get_chroot_base(family, codename, arch, args):
                                       family,
                                       default=opj(xdg.BaseDirectory.xdg_data_home,
                                                   'bigmess', 'chroots'))
+    chroot_basedir = os.path.expanduser(os.path.expandvars(chroot_basedir))
     lgr.debug("using chroot base directory at '%s'" % chroot_basedir)
     chroot_target = opj(chroot_basedir,
                         '%s-%s-%s' % (family, codename, arch))
@@ -148,6 +149,7 @@ def _proc_env(family, codename, args, source_include):
     else:
         aptcache = ''
         lgr.debug("no local apt cache in use")
+    aptcache = os.path.expanduser(os.path.expandvars(aptcache))
 
     cmd_opts_prefix = [
         '--build',
@@ -156,6 +158,7 @@ def _proc_env(family, codename, args, source_include):
 
     build_basedir = get_build_option('build basedir', args.build_basedir, family)
     if not build_basedir is None:
+        build_basedir = os.path.expanduser(os.path.expandvars(build_basedir))
         cmd_opts_prefix += ['--buildplace', build_basedir]
         if not os.path.exists(build_basedir):
             os.makedirs(build_basedir)
@@ -163,6 +166,8 @@ def _proc_env(family, codename, args, source_include):
     result_dir = get_build_option('result directory', args.result_dir, family)
     if result_dir is None:
         result_dir = os.path.abspath(os.curdir)
+    else:
+        result_dir = os.path.expanduser(os.path.expandvars(os.curdir))
     cmd_opts_prefix += ['--buildresult', result_dir]
     lgr.debug("placing build results in '%s'" % result_dir)
     if not os.path.exists(result_dir):
