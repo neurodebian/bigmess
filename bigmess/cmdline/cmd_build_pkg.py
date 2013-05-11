@@ -92,7 +92,7 @@ def _backport_dsc(dsc, codename, family, args):
         ]
     if cfg.has_option('release backport ids', codename):
         bp_args += ['--version-suffix',
-                    cfg.get('codename backport ids', codename)]
+                    cfg.get('release backport ids', codename)]
     lgr.debug('attempting to backport source package')
     bp_success = False
     bp_cmd = ['backport-dsc'] + bp_args + [dsc]
@@ -151,11 +151,12 @@ def _proc_env(family, codename, args, source_include):
             os.makedirs(build_basedir)
 
     result_dir = get_build_option('result directory', args.result_dir, family)
-    if not result_dir is None:
-        cmd_opts += ['--buildresult', result_dir]
-        lgr.debug("placing build results in '%s'" % result_dir)
-        if not os.path.exists(result_dir):
-            os.makedirs(result_dir)
+    if result_dir is None:
+        result_dir = os.path.abspath(os.curdir)
+    cmd_opts += ['--buildresult', result_dir]
+    lgr.debug("placing build results in '%s'" % result_dir)
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
 
     # backport
     if args.backport:
@@ -212,7 +213,7 @@ def _proc_env(family, codename, args, source_include):
         else:
             sp_args = ['sudo', builder] + cmd_opts + [args.dsc] 
         # make log file
-        dsc = deb822.Dsc(open(sp_args[-1]))
+        dsc = dict(deb822.Dsc(open(sp_args[-1])))
         dsc.update({'buildtime': int(time.time()), 'arch': arch})
         with open(opj(result_dir,
                       '%(Source)s_%(Version)s_%(arch)s_%(buildtime)s.build' % dsc),
