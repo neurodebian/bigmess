@@ -73,10 +73,13 @@ def setup_parser(parser):
             to adjust dependencies. more complex modification can be
             implemented as 'dsc-patch'es. See the manpage of backport-dsc
             for details""")
+    parser.add_argument('--dry-run', action='store_true',
+            help="""Do not perform any actions, only display the to-be-issued
+            commands.""")
     parser.add_argument('dsc')
 
 
-def _backport_dsc(dsc, codename, family, args):
+def _backport_dsc(dsc, codename, family, args, dryrun=False):
     dsc_dict = deb822.Dsc(open(dsc))
     # assemble backport-dsc call
     bp_args = ['--target-distribution', codename]
@@ -108,7 +111,10 @@ def _backport_dsc(dsc, codename, family, args):
     bp_success = False
     bp_cmd = ['backport-dsc'] + bp_args + [dsc]
     lgr.debug("calling: %s" % bp_cmd)
-    # use check_output() with 2.7+
+    if dryrun:
+        print 'DRYRUN: %s' % bp_cmd
+        return dsc
+    # TODO use check_output() with 2.7+
     bp_proc = subprocess.Popen(bp_cmd, stdout=subprocess.PIPE)
     output, unused_err = bp_proc.communicate()
     retcode = bp_proc.poll()
@@ -167,7 +173,8 @@ def _proc_env(family, codename, args, source_include):
 
     # backport
     if args.backport:
-        backported_dsc = _backport_dsc(args.dsc, codename, family, args)
+        backported_dsc = _backport_dsc(args.dsc, codename, family, args,
+                                       dryrun=args.dry_run)
 
     archs = get_build_option('architectures', args.arch, family)
     if not archs is None:
@@ -224,6 +231,10 @@ def _proc_env(family, codename, args, source_include):
         # make log file
         dsc = dict(deb822.Dsc(open(sp_args[-1])))
         dsc.update({'buildtime': int(time.time()), 'arch': arch})
+        first_arch = False
+        if args.dry_run:
+            print 'DRYRUN: %s' % sp_args
+            continue
         with open(opj(result_dir,
                       '%(Source)s_%(Version)s_%(arch)s_%(buildtime)s.build' % dsc),
                   'w') as logfile:
@@ -242,7 +253,6 @@ def _proc_env(family, codename, args, source_include):
                 summaryline += 'OK\n'
             logfile.write(summaryline)
         lgr.debug("finished building for architecture '%s'" % arch)
-        first_arch = False
     return had_failures
 
 def run(args):
