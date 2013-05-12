@@ -208,7 +208,7 @@ def _proc_env(family, codename, args, source_include):
                 buildtype_opt = ''
         else:
             # except for the first one all others are binary only
-            buildtype_opt += ' -B'
+            buildtype_opt = ' -B'
         if not debbuild_options is None:
             debbuild_options += buildtype_opt
         else:
@@ -268,7 +268,8 @@ def run(args):
             source_include = args.source_include
         if source_include is None:
             # any configure source include strategy?
-            source_include = cfg.get('build', 'source include', default=False)
+            source_include = arg2bool(get_build_option('source include', None,
+                                                       family, default=False))
         if _proc_env(family, codename, args, source_include):
             had_failures = True
         # don't include more than once per source package version - will cause
