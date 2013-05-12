@@ -47,7 +47,8 @@ import os
 import sys
 from os.path import join as opj
 from bigmess import cfg
-from .helpers import parser_add_common_args, get_build_option, get_dir_cfg
+from .helpers import parser_add_common_args, get_build_option, get_dir_cfg, \
+        arg2bool
 from .cmd_build_pkg import _backport_dsc, _get_chroot_base
 import logging
 lgr = logging.getLogger(__name__)
@@ -172,7 +173,9 @@ executable = %(executable)s
         if source_include is None:
             # any configure source include strategy?
             source_include = get_build_option('source include', source_include,
-                                               family, default=False)
+                                              family, default=None)
+            if not source_include is None:
+                source_include = arg2bool(source_include)
         dist_dsc = deb822.Dsc(open(dist_dsc_fname))
         dist_dsc_dir = os.path.dirname(dist_dsc_fname)
         # some verbosity for debugging
@@ -193,10 +196,18 @@ executable = %(executable)s
         for arch in archs:
             # basetgz
             basetgz = '%s.tar.gz' % _get_chroot_base(family, codename, arch, args)
-            if source_include and first_arch:
-                src_incl = 'yes'
+            if first_arch:
+                if source_include == True:
+                    # force inclusion
+                    build_opts = '%s %s' % (debbuild_options, '-sa')
+                elif source_include == False:
+                    # force exclusion
+                    build_opts = '%s %s' % (debbuild_options, '-b')
+                else:
+                    # keep default behavior
+                    build_opts = debbuild_options
             else:
-                src_incl = 'no'
+                build_opts = '%s %s' % (debbuild_options, '-B')
             arch_settings = {
                 'condorlog': os.path.abspath(logdir),
                 'arch': arch,
@@ -206,8 +217,7 @@ executable = %(executable)s
                                          '--result-dir', '.',
                                          '--arch', arch,
                                          '--chroot-basedir', '.',
-                                         '--source-include', src_incl,
-                                         "--debbuild-options ' %s'" % debbuild_options,
+                                         "--debbuild-options ' %s'" % build_opts,
                                          '--']
                                       + [os.path.basename(dist_dsc_fname)]),
                 'transfer_files': ','.join(transfer_files + [basetgz]),
