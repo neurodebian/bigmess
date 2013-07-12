@@ -34,11 +34,6 @@ def setup_parser(parser):
                         help="""target directory for storing the generated page""")
 
 
-def _write_page(page, destdir, fname):
-    of = codecs.open(opj(destdir, '%s.rst' % fname), 'wb', 'utf-8')
-    of.write(page)
-    of.close()
-
 def _literal_seconds(t):
     t = int(t)                            # assure seconds in int
 
