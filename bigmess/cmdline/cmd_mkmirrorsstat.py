@@ -78,6 +78,10 @@ def run(args):
         mirror_url = cfg.get('mirrors', mirror)
         mirror_name = cfg.get('mirror names', mirror)
 
+        age = None
+        age_str = None
+        status = "**N/A**"
+
         try:
             url = '%(mirror_url)s/%(stampfile)s' % locals()
             u = urllib2.urlopen(url)
@@ -89,12 +93,12 @@ def run(args):
                 status = "**OLD**"
             else:
                 status = "OK"
-        except urllib2.URLError:
-            lgr.error("Cannot fetch '%s'" % url)
-            # Here ideally we should revert to use previously known
-            # state
-            age_str = None
-            status = "**N/A**"
+        except urllib2.URLError, e:
+            lgr.error("Cannot fetch '%s': %s" % (url, e))
+            # Here ideally we should revert to use previously known state
+        except TypeError:
+            # int conversion has failed -- there is smth else in that file
+            lgr.error("Cannot assess the age. Retrieved stamp was %r" % stamp)
 
         mirrors_info[mirror] = [mirror_url, mirror_name, age, age_str, status]
 
