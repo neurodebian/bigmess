@@ -119,7 +119,9 @@ def _backport_dsc(dsc, codename, family, args, dryrun=False):
     output, unused_err = bp_proc.communicate()
     retcode = bp_proc.poll()
     if retcode:
-        raise RuntimeError("failed to run 'backport-dsc'")
+        raise RuntimeError(
+                "failed to run 'backport-dsc' command (exit code %i): %s"
+                % (retcode, bp_cmd))
     for line in output.split('\n'):
         if line.endswith('.dsc'):
             backported_dsc = line.split()[-1]
