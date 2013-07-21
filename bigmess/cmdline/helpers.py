@@ -121,6 +121,26 @@ def get_build_option(optname, cli_input=None, family=None, default=None):
                % (default, optname))
     return default
 
+def get_path_cfg(option, cmdline_input, family, ensure_exists=False,
+                 default=None):
+    """Specialized frontend for build options that specify paths
+
+    Parameters
+    ----------
+    option : str
+      Base name of the build option
+    cmdline_input : any
+      Value given via cmdline option
+    family : str
+      Build family ID
+    """
+    path_ = get_build_option(option, cmdline_input, family, default)
+    if path_ is None:
+        return path_
+    path_ = os.path.expanduser(os.path.expandvars(path_))
+    lgr.debug("path for '%s' set to '%s'" % (option, path_))
+    return path_
+
 def get_dir_cfg(option, cmdline_input, family, ensure_exists=False,
                 default=None):
     """Specialized frontend for build options that specify directories
@@ -136,15 +156,13 @@ def get_dir_cfg(option, cmdline_input, family, ensure_exists=False,
     ensure_exists : bool
       If True, the directory is created of it doesn't exist.
     """
-    dir_ = get_build_option(option, cmdline_input, family, default)
-    if dir_ is None:
-        return dir_
-    dir_ = os.path.expanduser(os.path.expandvars(dir_))
-    lgr.debug("directory for '%s' set to '%s'" % (option, dir_))
+    dir_ = get_path_cfg(option, cmdline_input, family, ensure_exists=ensure_exists,
+                        default=default)
     if ensure_exists and not os.path.exists(dir_):
         lgr.debug("create directory for '%s'" % option)
         os.makedirs(dir_)
     return dir_
+
 
 def arg2bool(arg):
     if arg in (True, False, None):

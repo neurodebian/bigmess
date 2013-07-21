@@ -30,7 +30,7 @@ import subprocess
 import os
 from os.path import join as opj
 from bigmess import cfg
-from .helpers import parser_add_common_args
+from .helpers import parser_add_common_args, get_dir_cfg, get_path_cfg
 import logging
 lgr = logging.getLogger(__name__)
 
@@ -47,10 +47,8 @@ def _proc_env(family, codename, args):
     if builder is None:
         builder = cfg.get('build', 'builder', default='pbuilder')
     lgr.debug("using '%s' for updating" % builder)
-
-    chroot_basedir = args.chroot_basedir
-    if chroot_basedir is None:
-        chroot_basedir = cfg.get('build', 'chroot basedir',
+    chroot_basedir = get_dir_cfg('chroot basedir', args.chroot_basedir,
+                                 family,
                                  default=opj(xdg.BaseDirectory.xdg_data_home,
                                             'bigmess', 'chroots'))
     lgr.debug("using chroot base directory at '%s'" % chroot_basedir)
@@ -67,13 +65,15 @@ def _proc_env(family, codename, args):
         '--aptcache', aptcache,
     ]
 
-    if cfg.has_option('build', '%s keyring' % family):
-        cmd_opts += ['--keyring', cfg.get('build', '%s keyring' % family)]
-    if cfg.has_option('build', '%s mirror' % family):
-        cmd_opts += ['--mirror', cfg.get('build', '%s mirror' % family)]
-    if cfg.has_option('build', '%s othermirror' % family):
-        cmd_opts += ['--othermirror',
-                     cfg.get('build', '%s othermirror' % family) % codename]
+    keyring = get_path_cfg('keyring', None, family) 
+    if not keyring is None:
+        cmd_opts += ['--keyring', keyring]
+    mirror = get_path_cfg('mirror', None, family) 
+    if not mirror is None:
+        cmd_opts += ['--mirror', mirror]
+    othermirror = get_path_cfg('othermirror', None, family) 
+    if not othermirror is None:
+        cmd_opts += ['--othermirror', othermirror % dict(release=codename)]
 
     archs = args.arch
     if archs is None:
