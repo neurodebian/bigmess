@@ -271,7 +271,7 @@ def run(args):
         if source_include is None:
             # any configure source include strategy?
             source_include = arg2bool(get_build_option('source include', None,
-                                                       family, default=False))
+                                                       family, default=None))
         if _proc_env(family, codename, args, source_include):
             had_failures = True
         # don't include more than once per source package version - will cause

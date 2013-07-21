@@ -147,7 +147,7 @@ def get_dir_cfg(option, cmdline_input, family, ensure_exists=False,
     return dir_
 
 def arg2bool(arg):
-    if arg in (True, False):
+    if arg in (True, False, None):
         return arg
     arg = arg.lower()
     if arg in ['0', 'no', 'off', 'disable', 'false']:
