@@ -284,7 +284,7 @@ fi
 
 
 if [ $# -ne 1 ]; then
-  printf "${Red}Error: This command needs exactly one positional argument.\n${NC}"
+  printf "${Red}Error: This command needs exactly one positional argument. Got: $@\n${NC}"
   exit 1
 fi
 
@@ -349,8 +349,9 @@ if [ "$bp_apply_patches" = 1 ]; then
     if [ "$bp_verbose" = 1 ]; then
       printf "${green}Applying additional patch $(basename "$p").\n${NC}"
     fi
-    patch -p1 --directory=$sdir < "$p"
-    $bp_dch_cmd "Applied additional patch from debian/patches/$(basename "$p")."
+    patch -p1 --directory=$sdir < "$p" \
+      && $bp_dch_cmd "Applied additional patch from debian/patches/$(basename "$p")." \
+      || ( printf "${Red}Failed to apply patch from debian/patches/$(basename "$p").\n${NC}" >&2 && exit 10 )
   done
 fi
 
