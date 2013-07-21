@@ -221,7 +221,14 @@ Report bugs to <michael.hanke@gmail.com>.
 EOT
 }
 
+error_exit () {
+  printf "${Red}Error: $1\n${NC}" >&2
+  exit $2
+}
 
+print_info () {
+  printf "${green}$1\n${NC}"
+}
 
 ################################
 # Commandline options handling #
@@ -284,16 +291,14 @@ fi
 
 
 if [ $# -ne 1 ]; then
-  printf "${Red}Error: This command needs exactly one positional argument. Got: $@\n${NC}"
-  exit 1
+  error_exit "this command needs exactly one positional argument. got: \"$@\"" 1
 fi
 
 # to be processed source package
 dsc_file=$1
 
 if [ ! -f "$dsc_file" ]; then
-  printf "${Red}Error: Cannot find DSC file at '$dsc_file'.\n${NC}"
-  exit 1
+  error_exit "cannot find DSC file at '$dsc_file'" 1
 fi
 
 # determine basic DSC properties
@@ -313,9 +318,9 @@ DEBFULLNAME="$bp_maintainer_name"
 export DEBEMAIL DEBFULLNAME
 
 if [ "$bp_verbose" = 1 ]; then
-  printf "${green}DSC name: '$src_name'\nDSC version: '$src_version'\n${NC}"
-  printf "${green}Backporting to '$bp_distribution', version suffix '$bp_version'\n${NC}"
-  printf "${green}Extracting source package to '$sdir'\n${NC}"
+  print_info "DSC name: '$src_name'\nDSC version: '$src_version'"
+  print_info "backporting to '$bp_distribution', version suffix '$bp_version'"
+  print_info "extracting source package to '$sdir'"
 fi
 
 # common debchange call
@@ -328,7 +333,7 @@ $bp_dch_cmd -D ${bp_distribution} -l "${bp_version}" "Backported for ${bp_distri
 
 if [ "$bp_update_maintainer" = 1 ]; then
   if [ "$bp_verbose" = 1 ]; then
-    printf "${green}Set backport maintainer to: '$bp_maintainer_name <$bp_maintainer_email>'\n${NC}"
+    print_info "set backport maintainer to: '$bp_maintainer_name <$bp_maintainer_email>'"
   fi
   bp_mod_control="$bp_mod_control -e 's/^Maintainer:.*$/Maintainer: $bp_maintainer_name <$bp_maintainer_email>\nX-Original-&/'"
 fi
@@ -339,7 +344,7 @@ if [ "$bp_apply_patches" = 1 ]; then
   # per each supported source package format
   if [ "$dsc_format" = "3.0 (quilt)" -a -f "$sdir/debian/patches/series-$bp_distribution" ]; then
     if [ "$bp_verbose" = 1 ]; then
-      printf "${green}Enabling additional quilt patch series for $bp_distribution.\n${NC}"
+      print_info "enabling additional quilt patch series for $bp_distribution."
     fi
     cat $sdir/debian/patches/series-$bp_distribution >> $sdir/debian/patches/series
     $bp_dch_cmd "Added 'series-$bp_distribution' in quilt patch series."
@@ -347,18 +352,18 @@ if [ "$bp_apply_patches" = 1 ]; then
   # look for backport patches
   for p in $(ls -1 $sdir/debian/patches/$bp_distribution-dsc-patch* 2> /dev/null || true); do
     if [ "$bp_verbose" = 1 ]; then
-      printf "${green}Applying additional patch $(basename "$p").\n${NC}"
+      print_info "applying additional patch $(basename "$p")."
     fi
     patch -p1 --directory=$sdir < "$p" \
       && $bp_dch_cmd "Applied additional patch from debian/patches/$(basename "$p")." \
-      || ( printf "${Red}Failed to apply patch from debian/patches/$(basename "$p").\n${NC}" >&2 && exit 10 )
+      || error_exit "failed to apply patch from debian/patches/$(basename "$p")" 10
   done
 fi
 
 # modify control file
 if [ -n "$bp_mod_control" ]; then
   if [ "$bp_verbose" = 1 ]; then
-    printf "${green}Modifying debian/control with given instructions.\n${NC}"
+    print_info "modifying debian/control with given instructions."
   fi
   bash -c "sed -i $bp_mod_control $sdir/debian/control"
   $bp_dch_cmd "Used following sed expression to modify debian/control:$bp_mod_control."
@@ -376,5 +381,5 @@ mv $wdir/* .
 rm -rf $wdir
 
 if [ "$bp_verbose" = 1 ]; then
-  printf "${green}Backported source package is at '${src_name}_$final_version.dsc'\n${NC}"
+  print_info "backported source package is at '${src_name}_$final_version.dsc'"
 fi
