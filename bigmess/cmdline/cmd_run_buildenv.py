@@ -72,7 +72,7 @@ def run(args):
 
     if not args.mount is None:
         cmd_opts += ['--bindmounts'] + args.mount
-    chroot_target = opj(args.chroot_basedir,
+    chroot_target = opj(os.path.expandvars(os.path.expanduser(args.chroot_basedir)),
                        '%s-%s-%s' % (family, codename, args.arch))
     if args.builder == 'pbuilder':
         cmd_opts += ['--basetgz', '%s.tar.gz' % chroot_target]
