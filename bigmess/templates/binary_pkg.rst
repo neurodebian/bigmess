@@ -41,6 +41,10 @@
 .. container:: license-reminder
 
   [Note: non-standard licensing terms -- please verify license compliance]
+{% elif component == 'contrib' -%}
+.. container:: license-reminder
+
+  [Note: some package dependencies have non-standard licensing terms -- please verify compliance]
 {% endif %}
 
 {{ description }}
