@@ -347,7 +347,7 @@ if [ "$bp_apply_patches" = 1 ]; then
       print_info "enabling additional quilt patch series for $bp_distribution."
     fi
     cat $sdir/debian/patches/series-$bp_distribution >> $sdir/debian/patches/series
-    $bp_dch_cmd "Added 'series-$bp_distribution' in quilt patch series."
+    $bp_dch_cmd -a "Added 'series-$bp_distribution' in quilt patch series."
   fi
   # look for backport patches
   for p in $(ls -1 $sdir/debian/patches/$bp_distribution-dsc-patch* 2> /dev/null || true); do
@@ -355,7 +355,7 @@ if [ "$bp_apply_patches" = 1 ]; then
       print_info "applying additional patch $(basename "$p")."
     fi
     patch -p1 --directory=$sdir < "$p" \
-      && $bp_dch_cmd "Applied additional patch from debian/patches/$(basename "$p")." \
+      && $bp_dch_cmd -a "Applied additional patch from debian/patches/$(basename "$p")." \
       || error_exit "failed to apply patch from debian/patches/$(basename "$p")" 10
   done
 fi
@@ -366,7 +366,7 @@ if [ -n "$bp_mod_control" ]; then
     print_info "modifying debian/control with given instructions."
   fi
   bash -c "sed -i $bp_mod_control $sdir/debian/control"
-  $bp_dch_cmd "Used following sed expression to modify debian/control:$bp_mod_control."
+  $bp_dch_cmd -a "Used following sed expression to modify debian/control:$bp_mod_control."
 fi
 
 # extract final version
