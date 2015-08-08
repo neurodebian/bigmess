@@ -51,7 +51,7 @@ def _proc_long_descr(lines):
     lines = [l.replace('% ', '%% ') for l in lines]
     lines = [l.replace(r'\t', '    ') for l in lines]
     re_leadblanks = re.compile("^ *")
-    re_itemized = re.compile("^[o*-+] +")
+    re_itemized = re.compile("^[-o*+] +")
     re_itemized_gr = re.compile("^( *)([-o*+] +)?(.*?)$")
 
     def unwrap_lines(lines):
