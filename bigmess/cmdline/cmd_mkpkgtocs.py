@@ -21,6 +21,7 @@ import os
 import re
 import logging
 import codecs
+import hashlib
 
 from os.path import join as opj
 
@@ -151,6 +152,7 @@ def run(args):
             cfg=cfg,
             label=label,
             title=title,
+            emailhash=hashlib.md5(memail.lower().strip()).hexdigest(),
             pkgs=mpkgs,
             srcdb=srcdb,
             bindb=bindb)

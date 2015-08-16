@@ -20,6 +20,7 @@ import os
 import re
 import codecs
 import logging
+import hashlib
 
 from os.path import join as opj
 
@@ -168,6 +169,16 @@ def _gen_pkg_page(pname, db, pkg_template):
     else:
         long_descr = 'No description available.'
 
+    maintainers = ', '.join([srcpkginfo.get(field)
+                             for field in ('maintainer', 'uploaders')
+                             if len(srcpkginfo.get(field, ''))]).split(',')
+    maint_info = []
+    for m in maintainers:
+        if not len(m):
+            continue
+        mname, memail = re.match(r'(.*) <(.*)>', m).groups()
+        emailhash=hashlib.md5(memail.lower().strip()).hexdigest(),
+        maint_info.append((mname, memail, emailhash))
     in_base_release = srcpkginfo.get('in_base_release', {})
     in_release = binpkginfo['in_release']
     availability = {}
@@ -188,6 +199,7 @@ def _gen_pkg_page(pname, db, pkg_template):
         title=title,
         description=long_descr,
         availability=availability,
+        maintainers=maint_info,
         **pkginfo)
     return page
 
