@@ -212,7 +212,7 @@ def _proc_env(family, codename, args, source_include):
             # except for the first one all others are binary only
             buildtype_opt = ' -B'
         if not debbuild_options is None:
-            debbuild_options += buildtype_opt
+            debbuild_options = '%s %s' % (buildtype_opt, debbuild_options)
         else:
             debbuild_options = buildtype_opt
         cmd_opts += ['--debbuildopts', debbuild_options]

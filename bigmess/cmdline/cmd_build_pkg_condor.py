@@ -160,6 +160,8 @@ executable = %(executable)s
         # change into the 'result-dir' to have Condor transfer all output here
         result_dir = get_dir_cfg('result directory', args.result_dir, family,
                                  ensure_exists=True)
+        build_basedir = get_dir_cfg('build basedir', args.build_basedir, family,
+                                    ensure_exists=True)
         if not result_dir is None:
             os.chdir(result_dir)
         # do any backports locally
@@ -213,7 +215,7 @@ executable = %(executable)s
                 'arch': arch,
                 'arguments': '"%s"' % ' '.join(argv[1:]
                                       + ['--env', family, codename,
-                                         '--build-basedir', 'buildbase',
+                                         '--build-basedir', build_basedir,
                                          '--result-dir', '.',
                                          '--arch', arch,
                                          '--chroot-basedir', '.',
