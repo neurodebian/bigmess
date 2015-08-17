@@ -21,6 +21,7 @@ import os
 import re
 import logging
 import codecs
+import hashlib
 
 from os.path import join as opj
 
@@ -36,6 +37,12 @@ def setup_parser(parser):
     parser_add_common_args(parser, opt=('pkgdb',))
     parser.add_argument('-d', '--dest-dir', default=os.curdir,
                         help="""target directory for storing the generated pages""")
+    parser.add_argument('-b', '--binpkgtoc-template',
+                        help="""Path to a custom template file for a table of contents of binary packages""")
+    parser.add_argument('-s', '--srcpkgtoc-template',
+                        help="""Path to a custom template file for a table of contents of source packages""")
+    parser.add_argument('-a', '--pkgtoc-template',
+                        help="""Path to a custom template file for a table of contents of all packages""")
 
 
 def _write_page(page, destdir, fname):
@@ -47,6 +54,7 @@ def _write_page(page, destdir, fname):
 def run(args):
     from jinja2 import Environment as JinjaEnvironment
     from jinja2 import PackageLoader as JinjaPackageLoader
+    from jinja2 import FileSystemLoader as JinjaFileSystemLoader
     lgr.debug("using package DB at '%s'" % args.pkgdb)
     # read entire DB
     db = load_db(args.pkgdb)
@@ -58,15 +66,15 @@ def run(args):
     maintainer_name = {}
     by_task = {}
     for pname, pkg in db['bin'].iteritems():
-        for release in pkg['in_release']:
-            by_release[release] = by_release.get(release, list()) + [pname]
         src_name = pkg['src_name']
+        for release in pkg['in_release']:
+            by_release[release] = by_release.get(release, set()).union((src_name,))
         if 'upstream' in srcdb[src_name] and 'Tags' in srcdb[src_name]['upstream']:
             # we have some tags
             for tag in srcdb[src_name]['upstream']['Tags']:
                 if tag.startswith('task::'):
                     task = tag[6:]
-                    by_task[task] = by_task.get(task, list()) + [pname]
+                    by_task[task] = by_task.get(task, set()).union((src_name,))
         maintainer = srcdb[pkg['src_name']]['maintainer']
         uploaders = [u.strip() for u in srcdb[src_name]['uploaders'].split(',')]
         for maint in uploaders + [maintainer]:
@@ -84,51 +92,79 @@ def run(args):
         # XXX extend when blend is ready
 
     # write TOCs for all releases
-    jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
-    bintoc_template = jinja_env.get_template('binpkg_toc.rst')
+    if not args.binpkgtoc_template is None:
+        templ_dir = os.path.dirname(args.binpkgtoc_template)
+        templ_basename = os.path.basename(args.binpkgtoc_template)
+        jinja_env = JinjaEnvironment(loader=JinjaFileSystemLoader(templ_dir))
+        bintoc_template = jinja_env.get_template(templ_basename)
+    else:
+        jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
+        bintoc_template = jinja_env.get_template('binpkg_toc.rst')
     toctoc = {'release': {}, 'maintainer': {}, 'field': {}}
     release_tocs = toctoc['release']
     for release_name, release_content in by_release.iteritems():
         label = 'toc_pkgs_for_release_%s' % release_name
         title = 'Packages for %s' % cfg.get('release names', release_name)
         release_tocs[label] = title
-        page = bintoc_template.render(label=label,
+        page = bintoc_template.render(cfg=cfg,
+                                      label=label,
                                       title=title,
                                       pkgs=release_content,
-                                      db=bindb)
+                                      srcdb=srcdb,
+                                      bindb=bindb)
         _write_page(page, args.dest_dir, label)
     task_tocs = toctoc['field']
     for task_name, task_content in by_task.iteritems():
         label = 'toc_pkgs_for_field_%s' % task_name
         title = 'Packages for %s' % taskdb[task_name]
         task_tocs[label] = title
-        page = bintoc_template.render(label=label,
+        page = bintoc_template.render(cfg=cfg,
+                                      label=label,
                                       title=title,
                                       pkgs=set(task_content),
-                                      db=bindb)
+                                      srcdb=srcdb,
+                                      bindb=bindb)
         _write_page(page, args.dest_dir, label)
     # full TOC
-    _write_page(bintoc_template.render(label='toc_all_pkgs',
+    _write_page(bintoc_template.render(cfg=cfg,
+                                       label='toc_all_pkgs',
                                        title='Complete package list',
-                                       pkgs=bindb.keys(),
-                                       db=bindb),
+                                       pkgs=srcdb.keys(),
+                                       srcdb=srcdb,
+                                       bindb=bindb),
                 args.dest_dir,
                 'toc_all_pkgs')
     # TOC by maintainer
-    srctoc_template = jinja_env.get_template('srcpkg_toc.rst')
+    if not args.srcpkgtoc_template is None:
+        templ_dir = os.path.dirname(args.srcpkgtoc_template)
+        templ_basename = os.path.basename(args.srcpkgtoc_template)
+        jinja_env = JinjaEnvironment(loader=JinjaFileSystemLoader(templ_dir))
+        srctoc_template = jinja_env.get_template(templ_basename)
+    else:
+        jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
+        srctoc_template = jinja_env.get_template('srcpkg_toc.rst')
     maintainer_tocs = toctoc['maintainer']
     for memail, mpkgs in by_maintainer.iteritems():
         label = 'toc_pkgs_for_maintainer_%s' % memail.replace('@', '_at_')
         title = 'Packages made by %s <%s>' % (maintainer_name[memail], memail)
         maintainer_tocs[label] = title
         page = srctoc_template.render(
+            cfg=cfg,
             label=label,
             title=title,
+            emailhash=hashlib.md5(memail.lower().strip()).hexdigest(),
             pkgs=mpkgs,
             srcdb=srcdb,
             bindb=bindb)
         _write_page(page, args.dest_dir, label)
 
     # TOC of TOCs
-    toctoc_template = jinja_env.get_template('pkg_tocs.rst')
+    if not args.pkgtoc_template is None:
+        templ_dir = os.path.dirname(args.pkgtoc_template)
+        templ_basename = os.path.basename(args.pkgtoc_template)
+        jinja_env = JinjaEnvironment(loader=JinjaFileSystemLoader(templ_dir))
+        toctoc_template = jinja_env.get_template(templ_basename)
+    else:
+        jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
+        toctoc_template = jinja_env.get_template('pkg_tocs.rst')
     print codecs.encode(toctoc_template.render(toctoc=toctoc), 'utf-8')
