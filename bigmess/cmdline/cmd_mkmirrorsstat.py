@@ -96,9 +96,10 @@ def run(args):
         except urllib2.URLError, e:
             lgr.error("Cannot fetch '%s': %s" % (url, e))
             # Here ideally we should revert to use previously known state
-        except TypeError:
+        except (TypeError, ValueError):
             # int conversion has failed -- there is smth else in that file
             lgr.error("Cannot assess the age. Retrieved stamp was %r" % stamp)
+            status = "**BRK**"
 
         mirrors_info[mirror] = [mirror_url, mirror_name, age, age_str, status]
 
