@@ -97,16 +97,18 @@ def run(args):
         templ_basename = os.path.basename(args.binpkgtoc_template)
         jinja_env = JinjaEnvironment(loader=JinjaFileSystemLoader(templ_dir))
         bintoc_template = jinja_env.get_template(templ_basename)
+        raise NotImplemented("need to define srctoc_template")
     else:
         jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
         bintoc_template = jinja_env.get_template('binpkg_toc.rst')
+        srctoc_template = jinja_env.get_template('srcpkg_toc.rst')
     toctoc = {'release': {}, 'maintainer': {}, 'field': {}}
     release_tocs = toctoc['release']
     for release_name, release_content in by_release.iteritems():
         label = 'toc_pkgs_for_release_%s' % release_name
         title = 'Packages for %s' % cfg.get('release names', release_name)
         release_tocs[label] = title
-        page = bintoc_template.render(cfg=cfg,
+        page = srctoc_template.render(cfg=cfg,
                                       label=label,
                                       title=title,
                                       pkgs=release_content,
@@ -118,7 +120,7 @@ def run(args):
         label = 'toc_pkgs_for_field_%s' % task_name
         title = 'Packages for %s' % taskdb[task_name]
         task_tocs[label] = title
-        page = bintoc_template.render(cfg=cfg,
+        page = srctoc_template.render(cfg=cfg,
                                       label=label,
                                       title=title,
                                       pkgs=set(task_content),
@@ -126,7 +128,7 @@ def run(args):
                                       bindb=bindb)
         _write_page(page, args.dest_dir, label)
     # full TOC
-    _write_page(bintoc_template.render(cfg=cfg,
+    _write_page(srctoc_template.render(cfg=cfg,
                                        label='toc_all_pkgs',
                                        title='Complete package list',
                                        pkgs=srcdb.keys(),
