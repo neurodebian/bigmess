@@ -141,7 +141,7 @@ def run(args):
                         bin_srcname = bin_name  # unused bin_srcname ???
                     if not bin_name in bindb:
                         if '-dbgsym' not in bin_name:
-                            lgr.warning("No corresponding source package for "
+                            lgr.debug("No corresponding source package for "
                                         "binary package '%s' in [%s, %s, %s]"
                                         % (bin_name, codename, comp, arch))
                         continue
