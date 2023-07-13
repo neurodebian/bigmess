@@ -177,7 +177,7 @@ def _gen_pkg_page(pname, db, pkg_template):
         if not len(m):
             continue
         mname, memail = re.match(r'(.*) <(.*)>', m).groups()
-        emailhash=hashlib.md5(memail.lower().strip()).hexdigest(),
+        emailhash=hashlib.md5(memail.lower().strip().encode()).hexdigest(),
         maint_info.append((mname, memail, emailhash))
     in_base_release = srcpkginfo.get('in_base_release', {})
     in_release = binpkginfo['in_release']

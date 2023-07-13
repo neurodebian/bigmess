@@ -60,7 +60,7 @@ def run(args):
                          for r in cfg.options('release files')
                          if not r == 'data'])
     if cfg.has_section('mirror names'):
-        mirror2name = dict([(m, codecs.decode(cfg.get('mirror names', m), 'utf-8'))
+        mirror2name = dict([(m, cfg.get('mirror names', m))
                             for m in cfg.options('mirrors')])
     if cfg.has_section('mirrors'):
         mirror2url = dict([(m, cfg.get('mirrors', m))
@@ -73,8 +73,7 @@ def run(args):
     else:
         jinja_env = Environment(loader=PackageLoader('bigmess'))
         srclist_template = jinja_env.get_template('sources_lists.rst')
-    print(codecs.encode(
+    print(
         srclist_template.render(code2name=code2relname,
                                 mirror2name=mirror2name,
-                                mirror2url=mirror2url),
-        'utf-8'))
+                                mirror2url=mirror2url))

@@ -154,7 +154,7 @@ def run(args):
             cfg=cfg,
             label=label,
             title=title,
-            emailhash=hashlib.md5(memail.lower().strip()).hexdigest(),
+            emailhash=hashlib.md5(memail.lower().strip().encode()).hexdigest(),
             pkgs=mpkgs,
             srcdb=srcdb,
             bindb=bindb)
@@ -169,4 +169,4 @@ def run(args):
     else:
         jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
         toctoc_template = jinja_env.get_template('pkg_tocs.rst')
-    print(codecs.encode(toctoc_template.render(toctoc=toctoc), 'utf-8'))
+    print(toctoc_template.render(toctoc=toctoc), 'utf-8')
