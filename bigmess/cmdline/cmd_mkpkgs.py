@@ -182,7 +182,7 @@ def _gen_pkg_page(pname, db, pkg_template):
     in_base_release = srcpkginfo.get('in_base_release', {})
     in_release = binpkginfo['in_release']
     availability = {}
-    for k in set(in_release.keys() + in_base_release.keys()):
+    for k in set(list(in_release.keys()) + list(in_base_release.keys())):
         release = cfg.get('release names', k)
         versions = in_release.get(k, None)
         base_version = in_base_release.get(k, '')
@@ -191,7 +191,7 @@ def _gen_pkg_page(pname, db, pkg_template):
         else:
             # List the same base version for every item in versions
             availability[release] = [(base_version, v_, a_)
-                                     for v_, a_ in in_release[k].iteritems()]
+                                     for v_, a_ in in_release[k].items()]
 
     page = pkg_template.render(
         cfg=cfg,

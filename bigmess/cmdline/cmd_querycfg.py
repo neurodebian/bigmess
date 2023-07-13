@@ -34,7 +34,7 @@ def run(args):
     elif len(query) < 2:
         # print an entire section
         for item in cfg.items(query[0]):
-            print '%s = %s' % item
+            print('%s = %s' % item)
     else:
         # print just one item
-        print cfg.get(query[0], query[1])
+        print(cfg.get(query[0], query[1]))

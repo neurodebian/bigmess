@@ -110,7 +110,7 @@ def run(args):
                                   % src_name)
                         try:
                             upstream = yaml.safe_load(open(mfpath))
-                        except yaml.scanner.ScannerError, e:
+                        except yaml.scanner.ScannerError as e:
                             lgr.warning("Malformed upstream YAML data for '%s'"
                                         % src_name)
                             lgr.debug("Caught exception was: %s" % (e,))
@@ -204,14 +204,14 @@ def run(args):
     for task in tasks:
         srcf_path = opj(args.filecache, 'task_%s' % task)
         for st in deb822.Packages.iter_paragraphs(open(srcf_path)):
-            if st.has_key('Task'):
+            if 'Task' in st:
                 taskdb[task] = st['Task']
                 continue
-            elif st.has_key('Depends'):
+            elif 'Depends' in st:
                 pkg = st['Depends']
-            elif st.has_key('Recommends'):
+            elif 'Recommends' in st:
                 pkg = st['Recommends']
-            elif st.has_key('Suggests'):
+            elif 'Suggests' in st:
                 pkg = st['Suggests']
             else:
                 lgr.warning("Ignoring unkown stanza in taskfile: %s" % st)
@@ -231,32 +231,32 @@ def run(args):
                 taglist.append('task::%s' % task)
                 udb['Tags'] = taglist
                 # Publications
-                if st.has_key('Published-Title') and not 'Reference' in udb:
+                if 'Published-Title' in st and not 'Reference' in udb:
                     title = st['Published-Title']
                     if title[-1] == '.':
                         # trip trailing dot -- added later
                         pub = {'Title': title[:-1]}
                     else:
                         pub = {'Title': title}
-                    if st.has_key('Published-Authors'):
+                    if 'Published-Authors' in st:
                         pub['Author'] = st['Published-Authors']
-                    if st.has_key('Published-Year'):
+                    if 'Published-Year' in st:
                         pub['Year'] = st['Published-Year']
-                    if st.has_key('Published-In'):
+                    if 'Published-In' in st:
                         pub['Journal'] = st['Published-In']
-                    if st.has_key('Published-URL'):
+                    if 'Published-URL' in st:
                         pub['URL'] = st['Published-URL']
-                    if st.has_key('Published-DOI'):
+                    if 'Published-DOI' in st:
                         pub['DOI'] = st['Published-DOI']
                         # need at least one URL
-                        if not pub.has_key('url'):
+                        if 'url' not in pub:
                             pub['URL'] = "http://dx.doi.org/%s" % st['Published-DOI']
                     udb['Reference'] = [pub]
                 # Registration
-                if st.has_key('Registration') and not 'Registration' in udb:
+                if 'Registration' in st and not 'Registration' in udb:
                     udb['Registration'] = st['Registration']
                 # Remarks
-                if st.has_key('Remark') and not 'Remark' in udb:
+                if 'Remark' in st and not 'Remark' in udb:
                     udb['Remark'] = st['Remark']
     # store the full DB
     save_db(db, args.pkgdb)

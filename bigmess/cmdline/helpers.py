@@ -53,7 +53,7 @@ class HelpAction(argparse.Action):
             usage_length = len(usagestr)
             usagestr = re.subn(r'\s+', ' ', usagestr.replace('\n', ' '))[0]
             helpstr = '%s\n%s' % (usagestr, helpstr[usage_length:])
-        print helpstr
+        print(helpstr)
         sys.exit(0)
 
 

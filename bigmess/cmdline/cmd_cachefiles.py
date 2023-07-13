@@ -16,7 +16,7 @@ __docformat__ = 'restructuredtext'
 
 import argparse
 import os
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import codecs
 import gzip
 import logging
@@ -47,17 +47,17 @@ def _download_file(url, dst, force_update=False, ignore_missing=False):
         lgr.debug("skip '%s'->'%s' (file exists)" % (url, dst))
         return True
     try:
-        urip = urllib2.urlopen(url)
+        urip = urllib.request.urlopen(url)
         fp = open(dst, 'wb')
         lgr.debug("download '%s'->'%s'" % (url, dst))
         fp.write(urip.read())
         fp.close()
         return True
-    except urllib2.HTTPError:
+    except urllib.error.HTTPError:
         if not ignore_missing:
             lgr.warning("cannot find '%s'" % url)
         return False
-    except urllib2.URLError:
+    except urllib.error.URLError:
         lgr.warning("cannot connect to '%s'" % url)
         return False
 
@@ -74,12 +74,12 @@ def _find_release_origin_archive(cfg, release):
             continue
         url = '%s/dists/%s/Release' % (archive, release)
         try:
-            urip = urllib2.urlopen(url)
+            urip = urllib.request.urlopen(url)
             info = urip.info()
             origins.append(archive)
-        except urllib2.HTTPError:
+        except urllib.error.HTTPError:
             lgr.debug("No '%s'" % url)
-        except urllib2.URLError:
+        except urllib.error.URLError:
             lgr.debug("Can't connect to'%s'" % url)
     if len(origins) == 0:
         lgr.info("Found no origin for %r. Assuming it originates here."

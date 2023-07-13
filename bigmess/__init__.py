@@ -31,10 +31,9 @@ class _SingletonType(type):
         return mcs._instances[sid]
 
 
-class __Singleton:
+class __Singleton(metaclass=_SingletonType):
     """To ensure single instance of a class instantiation (object)
     """
-    __metaclass__ = _SingletonType
 
     def __init__(self, *args):
         pass

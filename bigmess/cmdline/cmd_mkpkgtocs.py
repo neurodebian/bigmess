@@ -65,7 +65,7 @@ def run(args):
     by_maintainer = {}
     maintainer_name = {}
     by_task = {}
-    for pname, pkg in db['bin'].iteritems():
+    for pname, pkg in db['bin'].items():
         src_name = pkg['src_name']
         for release in pkg['in_release']:
             by_release[release] = by_release.get(release, set()).union((src_name,))
@@ -104,7 +104,7 @@ def run(args):
         srctoc_template = jinja_env.get_template('srcpkg_toc.rst')
     toctoc = {'release': {}, 'maintainer': {}, 'field': {}}
     release_tocs = toctoc['release']
-    for release_name, release_content in by_release.iteritems():
+    for release_name, release_content in by_release.items():
         label = 'toc_pkgs_for_release_%s' % release_name
         title = 'Packages for %s' % cfg.get('release names', release_name)
         release_tocs[label] = title
@@ -116,7 +116,7 @@ def run(args):
                                       bindb=bindb)
         _write_page(page, args.dest_dir, label)
     task_tocs = toctoc['field']
-    for task_name, task_content in by_task.iteritems():
+    for task_name, task_content in by_task.items():
         label = 'toc_pkgs_for_field_%s' % task_name
         title = 'Packages for %s' % taskdb[task_name]
         task_tocs[label] = title
@@ -131,7 +131,7 @@ def run(args):
     _write_page(srctoc_template.render(cfg=cfg,
                                        label='toc_all_pkgs',
                                        title='Complete package list',
-                                       pkgs=srcdb.keys(),
+                                       pkgs=list(srcdb.keys()),
                                        srcdb=srcdb,
                                        bindb=bindb),
                 args.dest_dir,
@@ -146,7 +146,7 @@ def run(args):
         jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
         srctoc_template = jinja_env.get_template('srcpkg_toc.rst')
     maintainer_tocs = toctoc['maintainer']
-    for memail, mpkgs in by_maintainer.iteritems():
+    for memail, mpkgs in by_maintainer.items():
         label = 'toc_pkgs_for_maintainer_%s' % memail.replace('@', '_at_')
         title = 'Packages made by %s <%s>' % (maintainer_name[memail], memail)
         maintainer_tocs[label] = title
@@ -169,4 +169,4 @@ def run(args):
     else:
         jinja_env = JinjaEnvironment(loader=JinjaPackageLoader('bigmess'))
         toctoc_template = jinja_env.get_template('pkg_tocs.rst')
-    print codecs.encode(toctoc_template.render(toctoc=toctoc), 'utf-8')
+    print(codecs.encode(toctoc_template.render(toctoc=toctoc), 'utf-8'))

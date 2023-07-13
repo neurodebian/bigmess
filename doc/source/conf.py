@@ -44,8 +44,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'bigmess'
-copyright = u'2012, The bigmess guys'
+project = 'bigmess'
+copyright = '2012, The bigmess guys'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -187,8 +187,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'bigmess.tex', u'bigmess Documentation',
-   u'The bigmess guys', 'manual'),
+  ('index', 'bigmess.tex', 'bigmess Documentation',
+   'The bigmess guys', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -217,8 +217,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'bigmess', u'bigmess Documentation',
-     [u'The bigmess guys'], 1)
+    ('index', 'bigmess', 'bigmess Documentation',
+     ['The bigmess guys'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -231,8 +231,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'bigmess', u'bigmess Documentation',
-   u'The bigmess guys', 'bigmess', 'One line description of project.',
+  ('index', 'bigmess', 'bigmess Documentation',
+   'The bigmess guys', 'bigmess', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -249,10 +249,10 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'bigmess'
-epub_author = u'The bigmess guys'
-epub_publisher = u'The bigmess guys'
-epub_copyright = u'2012, The bigmess guys'
+epub_title = 'bigmess'
+epub_author = 'The bigmess guys'
+epub_publisher = 'The bigmess guys'
+epub_copyright = '2012, The bigmess guys'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

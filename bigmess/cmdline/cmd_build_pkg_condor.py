@@ -192,7 +192,7 @@ executable = %(executable)s
                              default=os.curdir, ensure_exists=True)
         archs = get_build_option('architectures', args.arch, family)
         # TODO limit to default arch for arch:all packages
-        if isinstance(archs, basestring):
+        if isinstance(archs, str):
             archs = archs.split()
         first_arch = True
         for arch in archs:
@@ -244,7 +244,7 @@ queue
         source_include = False
     # store submit file
     if args.condor_dryrun:
-        print '== submit spec ========\n%s\n== end submit spec ====' % submit
+        print('== submit spec ========\n%s\n== end submit spec ====' % submit)
     else:
         condor_submit = subprocess.Popen(['condor_submit'], stdin=subprocess.PIPE)
         condor_submit.communicate(input=submit)

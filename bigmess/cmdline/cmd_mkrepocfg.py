@@ -73,8 +73,8 @@ def run(args):
     else:
         jinja_env = Environment(loader=PackageLoader('bigmess'))
         srclist_template = jinja_env.get_template('sources_lists.rst')
-    print codecs.encode(
+    print(codecs.encode(
         srclist_template.render(code2name=code2relname,
                                 mirror2name=mirror2name,
                                 mirror2url=mirror2url),
-        'utf-8')
+        'utf-8'))

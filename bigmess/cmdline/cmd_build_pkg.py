@@ -112,7 +112,7 @@ def _backport_dsc(dsc, codename, family, args, dryrun=False):
     bp_cmd = ['backport-dsc'] + bp_args + [dsc]
     lgr.debug("calling: %s" % bp_cmd)
     if dryrun:
-        print 'DRYRUN: %s' % bp_cmd
+        print('DRYRUN: %s' % bp_cmd)
         return dsc
     # TODO use check_output() with 2.7+
     bp_proc = subprocess.Popen(bp_cmd, stdout=subprocess.PIPE)
@@ -235,7 +235,7 @@ def _proc_env(family, codename, args, source_include):
         dsc.update({'buildtime': int(time.time()), 'arch': arch})
         first_arch = False
         if args.dry_run:
-            print 'DRYRUN: %s' % sp_args
+            print('DRYRUN: %s' % sp_args)
             continue
         with open(opj(result_dir,
                       '%(Source)s_%(Version)s_%(arch)s_%(buildtime)s.build' % dsc),

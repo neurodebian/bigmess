@@ -62,7 +62,7 @@ def test_literal_seconds():
 
 
 def run(args):
-    import codecs, time, urllib2
+    import codecs, time, urllib.request, urllib.error, urllib.parse
     from jinja2 import Environment, PackageLoader, FileSystemLoader
     jinja_env = Environment(loader=PackageLoader('bigmess'))
     template = jinja_env.get_template('mirrors_status.rst')
@@ -84,7 +84,7 @@ def run(args):
 
         try:
             url = '%(mirror_url)s/%(stampfile)s' % locals()
-            u = urllib2.urlopen(url)
+            u = urllib.request.urlopen(url)
             stamp = u.read()
             age = (time.time() - int(stamp))   # age in hours
             age_str = _literal_seconds(age)
@@ -93,7 +93,7 @@ def run(args):
                 status = "**OLD**"
             else:
                 status = "OK"
-        except urllib2.URLError, e:
+        except urllib.error.URLError as e:
             lgr.error("Cannot fetch '%s': %s" % (url, e))
             # Here ideally we should revert to use previously known state
         except (TypeError, ValueError):
