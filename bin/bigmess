@@ -100,7 +100,7 @@ for cmd in sorted([c for c in dir(mvcmd) if c.startswith('cmd_')]):
     cmd_name = cmd[4:]
     subcmdmod = getattr(__import__('bigmess.cmdline',
                                    globals(), locals(),
-                                   [cmd], -1),
+                                   [cmd]), #, -1),
                         cmd)
     # deal with optional parser args
     if 'parser_args' in subcmdmod.__dict__:
