@@ -14,10 +14,10 @@ import os.path
 import xdg.BaseDirectory
 
 from os.path import join as opj
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 
 
-class ConfigManager(SafeConfigParser):
+class ConfigManager(ConfigParser):
     """Central configuration registry for bigmess.
 
     The purpose of this class is to collect all configurable settings
@@ -83,7 +83,7 @@ class ConfigManager(SafeConfigParser):
         ----------
         filenames : list of filenames
         """
-        SafeConfigParser.__init__(self)
+        super().__init__()
 
         # set critical defaults
         for sec, params in ConfigManager._DEFAULTS.items():
@@ -158,7 +158,7 @@ class ConfigManager(SafeConfigParser):
             return default
 
         try:
-            return SafeConfigParser.get(self, section, option, **kwargs)
+            return super().get(section, option, **kwargs)
         except ValueError as e:
             # provide somewhat descriptive error
             raise ValueError(
@@ -185,7 +185,7 @@ class ConfigManager(SafeConfigParser):
                     raise ValueError('Not a boolean: %s' % default)
                 return boolean_states[default.lower()]
 
-        return SafeConfigParser.getboolean(self, section, option)
+        return super().getboolean(section, option)
 
     ##REF: Name was automagically refactored
     def get_as_dtype(self, section, option, dtype, default=None):
@@ -202,7 +202,7 @@ class ConfigManager(SafeConfigParser):
         if not self.has_option(section, option):
             return default
         try:
-            return SafeConfigParser._get(self, section, dtype, option)
+            return super()._get(section, dtype, option)
         except ValueError as e:
             # provide somewhat descriptive error
             raise ValueError(
